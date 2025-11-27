@@ -84,9 +84,7 @@ aws-chime-client/
 │── backend/
 │    └── createMeeting.js
 │── logo.png
-│── logo_aws_darkmode.png
 │── architecture.png
-│── aws_architecture_diagram.png
 │── README.md
 │── LICENSE
 │── CONTRIBUTING.md
