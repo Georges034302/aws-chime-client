@@ -187,59 +187,50 @@ Or manually:
 REGION="ap-southeast-2"
 HELPER_STACK="aws-sam-cli-managed-default"
 
-echo "Starting safe cleanup..."
-
-# 1. Remove local SAM build folder
+# Remove local SAM build folder
 rm -rf .aws-sam
 
-# 2. Identify SAM artifact bucket
+# Get SAM artifact bucket
 BUCKET=$(aws cloudformation describe-stack-resources \
   --stack-name "$HELPER_STACK" \
   --region "$REGION" \
   --query "StackResources[?ResourceType=='AWS::S3::Bucket'].PhysicalResourceId" \
   --output text 2>/dev/null)
 
-# 3. Delete SAM artifact bucket if it exists
+# Empty and delete bucket
 if [[ -n "$BUCKET" ]]; then
-  echo "Emptying bucket: $BUCKET"
-  
   # Delete all object versions
   aws s3api list-object-versions \
     --bucket "$BUCKET" \
     --region "$REGION" \
-    --output json \
-    --query 'Versions[].{Key:Key,VersionId:VersionId}' | \
-  jq -r '.[] | "--key \"\(.Key)\" --version-id \"\(.VersionId)\""' | \
-  xargs -I {} aws s3api delete-object --bucket "$BUCKET" --region "$REGION" {} 2>/dev/null
+    --query 'Versions[].{Key:Key,VersionId:VersionId}' \
+    --output json 2>/dev/null | \
+  jq -r '.[] | "aws s3api delete-object --bucket '$BUCKET' --region '$REGION' --key \"" + .Key + "\" --version-id \"" + .VersionId + "\""' | \
+  bash 2>/dev/null
   
   # Delete all delete markers
   aws s3api list-object-versions \
     --bucket "$BUCKET" \
     --region "$REGION" \
-    --output json \
-    --query 'DeleteMarkers[].{Key:Key,VersionId:VersionId}' | \
-  jq -r '.[] | "--key \"\(.Key)\" --version-id \"\(.VersionId)\""' | \
-  xargs -I {} aws s3api delete-object --bucket "$BUCKET" --region "$REGION" {} 2>/dev/null
+    --query 'DeleteMarkers[].{Key:Key,VersionId:VersionId}' \
+    --output json 2>/dev/null | \
+  jq -r '.[] | "aws s3api delete-object --bucket '$BUCKET' --region '$REGION' --key \"" + .Key + "\" --version-id \"" + .VersionId + "\""' | \
+  bash 2>/dev/null
   
-  # Delete remaining objects
-  aws s3 rm "s3://$BUCKET" --recursive --region "$REGION" 2>/dev/null
-  
-  echo "Deleting bucket: $BUCKET"
-  aws s3 rb "s3://$BUCKET" --force --region "$REGION"
+  # Delete bucket
+  aws s3 rb "s3://$BUCKET" --force --region "$REGION" 2>/dev/null
 fi
 
-# 4. Delete the SAM helper stack
-echo "Deleting SAM helper stack: $HELPER_STACK"
+# Delete SAM helper stack
 aws cloudformation delete-stack \
   --stack-name "$HELPER_STACK" \
-  --region "$REGION"
+  --region "$REGION" 2>/dev/null
 
-echo "Waiting for stack deletion to complete..."
 aws cloudformation wait stack-delete-complete \
   --stack-name "$HELPER_STACK" \
   --region "$REGION" 2>/dev/null
 
-echo "Cleanup completed. Backend remains operational."
+echo "✅ Cleanup complete"
 ```
 
 **Note:** This only removes deployment artifacts. Your application stack (`aws-chime-api`) and API Gateway endpoint remain fully operational.
