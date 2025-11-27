@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AWS Chime Client</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chime SDK JS should be bundled or loaded; this is a placeholder example CDN -->
+  <script src="https://unpkg.com/amazon-chime-sdk-js@latest/dist/amazon-chime-sdk.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <img class="logo" src="img/logo_dark.png" alt="AWS Chime Client Logo" />
+    <div class="title-block">
+      <h1>AWS Chime Client</h1>
+      <p class="subtitle">Custom web client with virtual background support</p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card join-card">
+      <h2>Join a Meeting</h2>
+      <label>
+        Meeting ID
+        <input id="meetingId" type="text" placeholder="Enter or generate meeting ID" />
+      </label>
+      <label>
+        Your Name
+        <input id="name" type="text" placeholder="Your display name" />
+      </label>
+
+      <label>
+        Region
+        <select id="region">
+          <option value="us-east-1">us-east-1</option>
+          <option value="us-west-2">us-west-2</option>
+          <option value="eu-west-1">eu-west-1</option>
+        </select>
+      </label>
+
+      <button id="joinButton" class="btn primary">Join Meeting</button>
+      <p id="status" class="status-text"></p>
+    </section>
+
+    <section class="card media-card">
+      <h2>Preview & Background</h2>
+      <div class="video-row">
+        <div class="video-container">
+          <div id="video-preview" class="video-tile"></div>
+          <p class="video-label">Local Preview</p>
+        </div>
+        <div class="video-container">
+          <div id="remote-videos" class="video-tile remote"></div>
+          <p class="video-label">Remote Participants</p>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <div class="control-group">
+          <label>
+            Camera
+            <select id="cameraSelect"></select>
+          </label>
+          <label>
+            Microphone
+            <select id="micSelect"></select>
+          </label>
+        </div>
+
+        <div class="control-group">
+          <label>
+            Background Mode
+            <select id="bgMode">
+              <option value="none">None</option>
+              <option value="blur">Blur</option>
+              <option value="image">Image</option>
+            </select>
+          </label>
+          <label class="file-label">
+            Background Image
+            <input id="bgImage" type="file" accept="image/*" />
+          </label>
+        </div>
+
+        <div class="buttons-group">
+          <button id="toggleVideo" class="btn">Toggle Video</button>
+          <button id="toggleAudio" class="btn">Toggle Audio</button>
+          <button id="leaveButton" class="btn danger">Leave</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span>Built for custom Amazon Chime meetings with virtual backgrounds.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
