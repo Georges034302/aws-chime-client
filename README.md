@@ -1,4 +1,5 @@
 # 📘 AWS Chime Client — Custom Web Client with Virtual Backgrounds
+<img width="854" height="854" alt="cropped_circle_image" src="https://github.com/user-attachments/assets/9db7a38b-5df2-4696-b584-ab37c5b8ba3d" />
 
 ## 🌐 Overview
 The **AWS Chime Client** is a lightweight, browser‑based web application that enables users to join official Amazon Chime meetings with a **virtual background** or **background blur**.  
