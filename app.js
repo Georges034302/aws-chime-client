@@ -4,7 +4,7 @@
  * that returns { meeting, attendee } from the backend Lambda.
  */
 
-const API_URL = "https://your-api-gateway-endpoint.example.com/join"; // TODO: replace
+const API_URL = "https://ytzz5sx9r1.execute-api.ap-southeast-2.amazonaws.com/prod/join";
 
 let meetingSession = null;
 let audioVideo = null;

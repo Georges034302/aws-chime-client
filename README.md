@@ -73,18 +73,22 @@ Other Chime Participants (Official Chime App)
 
 ```
 aws-chime-client/
-│── index.html
-│── app.js
-│── style.css
-│── img/
-│    └── background.jpg
+│── template.yaml              ← SAM template (must be in root)
 │── backend/
-│    └── createMeeting.js
-│── logo.png
-│── architecture.png
-│── README.md
+│    └── createMeeting.js     ← Lambda handler
+│── index.html
+│── app.js                     ← Frontend 
+│── style.css
+│── docs/
+│    └── CONTRIBUTING.md
+│    └── CHANGELOG.md
+│    └── CROADMAP.md
+│    └── index.md
+│── img/
+│    └── logo_dark.png
+│    └── aws_architecture.png
 │── LICENSE
-│── CONTRIBUTING.md
+└── README.md
 ```
 
 ---

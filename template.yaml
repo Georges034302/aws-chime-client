@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Chime Client Backend - Meeting + Attendee Creation
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: nodejs18.x
+    MemorySize: 256
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        CHIME_REGION: ap-southeast-2
+
+Resources:
+
+  ApiGatewayRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'POST,OPTIONS'"
+        AllowHeaders: "'Content-Type'"
+        AllowOrigin: "'*'"
+
+  CreateMeetingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: CreateMeetingFunction
+      Handler: createMeeting.handler
+      CodeUri: backend/
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - chime:CreateMeeting
+                - chime:CreateAttendee
+              Resource: "*"
+      Events:
+        JoinMeetingApi:
+          Type: Api
+          Properties:
+            Path: /join
+            Method: POST
+            RestApiId: !Ref ApiGatewayRestApi
+
+Outputs:
+  ApiURL:
+    Description: "Invoke URL for Join Meeting"
+    Value: !Sub "https://${ApiGatewayRestApi}.execute-api.ap-southeast-2.amazonaws.com/prod/join"
