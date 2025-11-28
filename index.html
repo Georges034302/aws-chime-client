@@ -233,14 +233,21 @@
      *************************************************************/
     const oldFetch = window.fetch;
     window.fetch = function (url, options = {}) {
-      if (window.idToken) {
-        console.log("🔐 Adding Authorization header to request:", url);
+      // Only add Authorization header for our backend API calls
+      const isBackendAPI = url.includes('execute-api.ap-southeast-2.amazonaws.com') || 
+                          (url.includes('localhost') && url.includes('/join')) ||
+                          (url.includes('127.0.0.1') && url.includes('/join'));
+      
+      if (window.idToken && isBackendAPI) {
+        console.log("🔐 Adding Authorization header to backend API:", url);
         options.headers = {
           ...(options.headers || {}),
           Authorization: window.idToken
         };
+      } else if (isBackendAPI) {
+        console.log("⚠️ No token available for backend API:", url);
       } else {
-        console.log("⚠️ No token available for request:", url);
+        console.log("📦 Resource request (no auth):", url.substring(0, 80) + "...");
       }
       return oldFetch(url, options);
     };
