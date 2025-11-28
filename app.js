@@ -470,6 +470,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Create a simple logger for the background processors
+      const logger = {
+        info: (...args) => console.log(...args),
+        debug: (...args) => console.debug(...args),
+        warn: (...args) => console.warn(...args),
+        error: (...args) => console.error(...args)
+      };
+
       if (mode === "blur") {
         const spec = {
           paths: {
@@ -478,7 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
             simd: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation-simd.wasm'
           },
           blurStrength: 40,
-          logger: meetingSession.logger
+          logger: logger
         };
         currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(spec);
       }
@@ -497,7 +505,7 @@ document.addEventListener("DOMContentLoaded", () => {
             simd: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation-simd.wasm'
           },
           imageBlob: selectedBackgroundImage,
-          logger: meetingSession.logger
+          logger: logger
         };
         currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec);
       }
