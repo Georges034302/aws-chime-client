@@ -6,6 +6,11 @@
 
 const API_URL = "https://ytzz5sx9r1.execute-api.ap-southeast-2.amazonaws.com/prod/join";
 
+// Check if Chime SDK is loaded
+if (typeof ChimeSDK === 'undefined') {
+  console.error('Amazon Chime SDK not loaded. Please check the script tag in index.html');
+}
+
 let meetingSession = null;
 let audioVideo = null;
 let isVideoOn = false;
