@@ -1,92 +1,94 @@
 # AWS Chime Client
 [<img src="https://github.com/user-attachments/assets/9db7a38b-5df2-4696-b584-ab37c5b8ba3d" width="100" style="margin-right: 20px; margin-top: 5px;" />](https://georges034302.github.io/aws-chime-client/)
-<br>
+
 ## 🌐 Overview
-The **AWS Chime Client** is a lightweight, browser‑based web application that enables users to join official Amazon Chime meetings with a **virtual background** or **background blur**.  
-It provides a clean UI, requires **no installation**, and works seamlessly with standard Amazon Chime participants.
+A lightweight, browser‑based **Amazon Chime SDK v3** client with advanced video features including background blur, virtual backgrounds, screen sharing, and real-time participant roster.
 
-Built with **Amazon Chime SDK v3** on the frontend and **AWS SDK v3** on the backend, the application leverages modern JavaScript APIs for optimal performance.
+**No installation required** — works directly in your browser and interoperates seamlessly with official Amazon Chime participants.
 
-The frontend is served through **GitHub Pages**, while a small, stateless backend on AWS handles meeting creation.  
-All video/audio media flows directly through Amazon Chime's WebRTC infrastructure.
+Built with modern web standards:
+- **Frontend**: Amazon Chime SDK JavaScript v3.20.0 (via esm.sh CDN)
+- **Backend**: AWS Lambda + API Gateway (AWS SDK v3)
+- **Hosting**: GitHub Pages (frontend) + AWS (backend)
+
+All media flows through Amazon Chime's WebRTC infrastructure — the backend only handles meeting creation.
 
 ---
 
-## 🎯 Purpose
-This project is ideal for:  
-- **Interviews** requiring a clean background  
-- **Professional demos**  
-- **Testing Chime SDK video pipelines**  
-- Users needing a simple browser‑based alternative to the official Chime app  
-
-The goal is to demonstrate how a minimal, elegant Chime client can be built using modern browser capabilities and AWS‑managed services.
+## 🎯 Use Cases
+- Professional interviews with clean backgrounds
+- Remote demos and presentations
+- Testing Chime SDK video pipelines
+- Lightweight browser alternative to desktop Chime app
 
 ---
 
 ## 🚀 Key Features
-- **Background blur** using BackgroundBlurVideoFrameProcessor  
-- **Virtual background replacement** with custom image upload  
-- **Screen sharing** with dedicated display tile and controls  
-- **Live participants roster** with real-time join/leave tracking  
-- **Mute/unmute indicators** showing live audio status for all participants  
-- **Screen sharing presence** indicator in participant list  
-- **Transform device pipeline** for real-time video effects with helper functions  
-- **Clean code architecture** with applyTransform() and stopVideoWithCleanup() helpers  
-- **Modern glassmorphism UI** with circle button controls  
-- Browser‑based video/audio controls with device selection  
-- Zero installation (browser‑only)  
-- Free static hosting via GitHub Pages  
-- Interoperable with official Amazon Chime clients  
-- Stateless AWS backend (Lambda + API Gateway)  
-- Runtime WASM/model loading from AWS CDN  
+
+### Video & Audio
+- **Background blur** with configurable strength
+- **Custom virtual backgrounds** via image upload
+- **Screen sharing** with dedicated display tile
+- Camera and microphone device selection
+- Real-time video transform pipeline
+
+### Collaboration
+- **Live participants roster** with join/leave tracking
+- **Mute status indicators** (🎤/🔇) for all attendees
+- **Screen sharing presence** (🖥️) in participant list
+- Compatible with official Chime clients
+
+### Technical
+- Modern glassmorphism UI with intuitive controls
+- Clean code architecture with helper functions
+- Zero installation — runs entirely in browser
+- Runtime WASM loading for background filters
+- Free hosting via GitHub Pages
 
 ---
 
-## 🏗 High‑Level Architecture
-
-### 1️⃣ Frontend — GitHub Pages
-- Lightweight static web client  
-- Uses Amazon Chime SDK JavaScript v3.20.0 (loaded via esm.sh CDN)  
-- Clean SDK loading with minimal global namespace pollution  
-- Background filters: BackgroundBlurVideoFrameProcessor & BackgroundReplacementVideoFrameProcessor  
-- **Screen sharing with dedicated tile display**  
-- **Real-time participants roster with presence tracking**  
-- **Mute/unmute status indicators for all attendees**  
-- Transform device pipeline for real-time video effects  
-- Helper functions (applyTransform, stopVideoWithCleanup) for maintainable code  
-- **Modern glassmorphism UI design**  
-- Handles UI, device selection, and video processing  
-- WASM segmentation models loaded from AWS CDN at runtime  
-- Connects directly to Chime WebRTC services  
-- No servers or deployments required  
-
-### 2️⃣ Backend — AWS Lambda + API Gateway
-- Creates new meetings and attendees using AWS SDK v3  
-- Built with @aws-sdk/client-chime-sdk-meetings package  
-- Node.js 18.x runtime with CommonJS modules  
-- Stateless and extremely low‑cost  
-- Exposed via a single HTTPS endpoint  
-- Does **not** process video or audio  
-
----
-
-## 🧩 Architecture Diagram
+## 🏗 Architecture
 
 ```
-GitHub Pages (Frontend)
-        │
-        ▼
-API Gateway (HTTPS Endpoint)
-        │
-        ▼
-AWS Lambda (Meeting + Attendee Creation)
-        │
-        ▼
-Amazon Chime Media Services (WebRTC)
-        │
-        ▼
-Other Chime Participants (Official Chime App)
+┌─────────────────────────┐
+│   GitHub Pages          │
+│   (Static Frontend)     │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│   API Gateway           │
+│   (HTTPS Endpoint)      │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│   Lambda Function       │
+│   (Meeting Creation)    │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│   Amazon Chime Services │
+│   (WebRTC Media)        │
+└─────────────────────────┘
 ```
+
+**Components:**
+
+**Frontend (GitHub Pages)**
+- Static web client with Amazon Chime SDK v3.20.0
+- Background filters (BackgroundBlurVideoFrameProcessor, BackgroundReplacementVideoFrameProcessor)
+- Screen sharing controls
+- Real-time participant roster
+- Transform device pipeline
+- WASM models loaded from AWS CDN at runtime
+
+**Backend (AWS Lambda)**
+- Creates meetings and attendees via AWS SDK v3
+- Node.js 18.x runtime
+- Stateless, serverless, low-cost
+- Does not process video/audio
 
 ---
 
@@ -94,80 +96,64 @@ Other Chime Participants (Official Chime App)
 
 ```
 aws-chime-client/
-├── LICENSE
-├── README.md
-├── app.js                     ← Frontend JavaScript (SDK v3 + Background Filters)
+├── app.js                     ← Frontend logic (SDK v3)
+├── index.html                 ← HTML structure
+├── style.css                  ← Styling
 ├── backend/
-│   ├── createMeeting.js       ← Lambda handler (AWS SDK v3)
-│   └── package.json           ← Dependencies (@aws-sdk/client-chime-sdk-meetings)
-├── cleanup.sh                 ← Cleanup script
+│   ├── createMeeting.js       ← Lambda handler
+│   └── package.json           ← Dependencies
+├── template.yaml              ← SAM CloudFormation template
 ├── docs/
-│   ├── CHANGELOG.md
-│   ├── CONTRIBUTING.md
-│   ├── INSTRUCTIONS.md        ← This file
-│   ├── ROADMAP.md
-│   └── index.md
-├── img/
-│   ├── aws_architecture.png
-│   └── logo_dark.png
-├── index.html                 ← Frontend HTML
-├── samconfig.toml             ← SAM deployment config (auto-generated)
-├── style.css                  ← Frontend CSS
-└── template.yaml              ← SAM template
+│   ├── INSTRUCTIONS.md        ← Deployment guide
+│   ├── CHANGELOG.md           ← Version history
+│   └── ROADMAP.md             ← Feature roadmap
+└── img/                       ← Assets
 ```
 
 ---
 
-## 🚀 Deployment Model
+## 🎮 Quick Start
 
-### 🌐 Frontend Hosting (GitHub Pages)
-- Provides static, globally available hosting  
-- No maintenance required  
-- Instant redeployment via repo updates  
-- Accessible via a public HTTPS URL  
+1. **Open the app**: Visit [GitHub Pages deployment](https://georges034302.github.io/aws-chime-client/)
+2. **Enter meeting details**: Meeting ID, your name, and AWS region
+3. **Join meeting**: Click "Join Meeting" to connect
+4. **Enable video**: Click camera button to start video
+5. **Choose background**: Select None/Blur/Image from dropdown
+6. **Upload custom image**: Click "Upload Image" for virtual backgrounds
+7. **Share screen**: Click screen share button (🖥️)
+8. **View participants**: See real-time roster with mute status
 
-### ☁️ Backend Hosting (AWS)
-- Lambda function triggered by API Gateway  
-- Stateless, highly reliable, low‑cost  
-- Only invoked during meeting join requests  
-- Completely independent of video media traffic  
+### Camera/Mic Controls
+- Select devices from dropdown menus
+- Click 🎤 to mute/unmute
+- Click 🎥 to start/stop video
+- Click ⛔ to leave meeting
 
 ---
 
-## 🎮 Usage Overview
-1. Open the GitHub Pages‑hosted site  
-2. Enter meeting ID and your name  
-3. The client requests meeting credentials from AWS Lambda  
-4. Join the meeting via the browser  
-5. **View participants list** with real-time join/leave updates  
-6. Click "Start Video" to enable camera  
-7. Select camera and microphone from device dropdowns  
-8. Choose background mode:  
-   - **None**: Regular camera feed  
-   - **Blur**: Apply background blur effect  
-   - **Image**: Upload and apply custom background image  
-9. Video appears with applied background effects in real-time  
-10. **Click screen share button** to share your screen  
-11. **Monitor participant mute status** in the roster (🎤/🔇)  
-12. **See screen sharing indicator** (🖥️) when someone shares  
-13. Switch cameras while preserving background effects  
+## 🛠 Deployment
+
+See [`docs/INSTRUCTIONS.md`](docs/INSTRUCTIONS.md) for complete deployment guide including:
+- AWS CLI and SAM CLI setup
+- Backend deployment to AWS
+- Frontend configuration
+- GitHub Pages hosting
 
 ---
 
 ## ⚠️ Limitations
-- The official Amazon Chime application cannot be modified  
-- Performance may vary depending on CPU/GPU capabilities  
-- Not intended for large‑scale enterprise meetings  
+- Performance depends on device CPU/GPU capabilities
+- Not designed for large-scale enterprise deployments
+- Background filters require modern browser with WebAssembly support
 
 ---
 
 ## 📜 License
-This project is distributed under the **MIT License**.  
-See the `LICENSE` file for full details.
+MIT License — see [`LICENSE`](LICENSE) file for details.
 
 ---
 
-## 👤 Author ✍️
+## 👤 Author
 **Georges Bou Ghantous**  
-Suggestions and contributions are appreciated!
+Contributions and suggestions welcome!
 
