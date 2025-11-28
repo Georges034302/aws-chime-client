@@ -5,110 +5,81 @@
   <title>AWS Chime Client</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
-
   <!-- Load Chime SDK (browser ESM build) -->
   <script type="module">
     import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
     window.ChimeSDK = ChimeSDK;
   </script>
 </head>
-
 <body>
   <div class="main-container">
-
-    <!-- LEFT SIDEBAR -->
+    <!-- Sidebar: Join & Participants -->
     <aside class="sidebar">
-
       <section class="card">
         <h2>Join a Meeting</h2>
-
-        <label>Meeting ID
-          <input id="meetingId" type="text" placeholder="Enter meeting ID" />
-        </label>
-
-        <label>Your Name
-          <input id="name" type="text" placeholder="Your display name" />
-        </label>
-
-        <label>Region
-          <select id="region">
-            <option value="ap-southeast-2">ap-southeast-2</option>
-            <option value="us-east-1">us-east-1</option>
-            <option value="us-west-2">us-west-2</option>
-          </select>
-        </label>
-
-        <button id="joinButton" class="btn primary">Join Meeting</button>
-        <p id="status" class="status"></p>
+        <label for="meetingId">Meeting ID</label>
+        <input id="meetingId" type="text" placeholder="Enter meeting ID" />
+        <label for="name">Your Name</label>
+        <input id="name" type="text" placeholder="Your display name" />
+        <label for="region">Region</label>
+        <select id="region">
+          <option value="ap-southeast-2">ap-southeast-2</option>
+          <option value="us-east-1">us-east-1</option>
+          <option value="us-west-2">us-west-2</option>
+        </select>
+        <div class="buttons-row">
+          <button id="joinButton" class="btn primary">Join</button>
+          <button id="leaveButton" class="btn danger">Leave</button>
+        </div>
+        <p id="status" class="status">Idle</p>
       </section>
-
       <section class="card">
         <h2>Participants</h2>
         <ul id="participantsList" class="participants-list"></ul>
       </section>
-
     </aside>
-
-    <!-- RIGHT CONTENT -->
+    <!-- Main Content: Video & Controls -->
     <main class="content">
-
       <h2>Video & Background</h2>
-
       <div class="video-area">
         <div class="video-box">
+          <h3>Local Video</h3>
           <div id="video-preview" class="video-tile"></div>
-          <p class="label">Your Camera</p>
         </div>
-
         <div class="video-box">
+          <h3>Remote Videos</h3>
           <div id="remote-videos" class="video-tile"></div>
-          <p class="label">Remote Participants</p>
         </div>
       </div>
-
       <div class="controls">
-
         <div class="control-group">
-          <label>Camera
-            <select id="cameraSelect"></select>
-          </label>
+          <label for="cameraSelect">Camera</label>
+          <select id="cameraSelect"></select>
         </div>
-
         <div class="control-group">
-          <label>Microphone
-            <select id="micSelect"></select>
-          </label>
+          <label for="micSelect">Microphone</label>
+          <select id="micSelect"></select>
         </div>
-
         <div class="control-group">
-          <label>Background
-            <select id="bgMode">
-              <option value="none">None</option>
-              <option value="blur">Blur</option>
-              <option value="image">Image</option>
-            </select>
-          </label>
+          <label for="bgMode">Background</label>
+          <select id="bgMode">
+            <option value="none">None</option>
+            <option value="blur">Blur</option>
+            <option value="image">Image</option>
+          </select>
         </div>
-
         <div class="control-group">
-          <label>Upload Image
-            <input id="bgImage" type="file" accept="image/*" />
-          </label>
+          <label for="bgImage">Upload Image</label>
+          <input id="bgImage" type="file" accept="image/*" />
         </div>
-
       </div>
-
       <div class="buttons-row">
         <button id="toggleVideo" class="btn">Start Video</button>
         <button id="toggleAudio" class="btn">Mute</button>
         <button id="shareScreen" class="btn">Share Screen</button>
-        <button id="leaveButton" class="btn danger">Leave Meeting</button>
       </div>
-
     </main>
-
   </div>
-
   <script src="app.js"></script>
 </body>
 </html>

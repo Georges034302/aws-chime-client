@@ -1,14 +1,16 @@
+import * as ChimeSDK from "./node_modules/amazon-chime-sdk-js/build/browser.js";
+
 /**
- * AWS Chime Client - Full SDK v3 Client
- * Includes:
- * - Join Meeting
- * - Video + Audio
- * - Background Blur
- * - Background Replacement
- * - Screen Sharing (start/stop)
+ * AWS Chime Client – FIXED VERSION
+ * - No mixed SDK versions
+ * - Correct logging
+ * - Correct WASM paths
+ * - Stable background blur + replacement
+ * - Stable roster + video tiles
  */
 
-const API_URL = "https://ytzz5sx9r1.execute-api.ap-southeast-2.amazonaws.com/prod/join";
+const API_URL =
+  "https://ytzz5sx9r1.execute-api.ap-southeast-2.amazonaws.com/prod/join";
 
 let meetingSession = null;
 let audioVideo = null;
@@ -19,17 +21,25 @@ let isAudioOn = true;
 let isSharingScreen = false;
 
 let currentProcessor = null;
+let currentTransformDevice = null;
 let selectedBackgroundImage = null;
 
-// UI References - will be initialized after DOM loads
-let statusEl, joinButton, leaveButton, toggleVideoButton, toggleAudioButton;
-let shareButton, cameraSelect, micSelect, bgModeSelect, rosterList;
-const roster = {}; // attendeeId → { name, muted, isContent }
+let statusEl,
+  joinButton,
+  leaveButton,
+  toggleVideoButton,
+  toggleAudioButton,
+  shareButton,
+  cameraSelect,
+  micSelect,
+  bgModeSelect,
+  rosterList;
 
+const roster = {}; // attendeeId -> { name, muted, isContent }
 
-/* -------------------------------------------------------------
- * Helper
- * ------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Helper
+// --------------------------------------------------------------------------
 function setStatus(msg) {
   if (statusEl) statusEl.textContent = msg;
 }
@@ -37,25 +47,26 @@ function setStatus(msg) {
 function updateRosterUI() {
   rosterList.innerHTML = "";
 
-  Object.values(roster).forEach((att) => {
-    const li = document.createElement("li");
+  Object.values(roster)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach((att) => {
+      const li = document.createElement("li");
 
-    li.innerHTML = `
-      <span class="roster-name">${att.name}</span>
-      <span class="roster-icons">
-        ${att.isContent ? "🖥️" : ""}
-        ${att.muted ? "🔇" : "🎤"}
-      </span>
-    `;
+      li.innerHTML = `
+        <span class="roster-name">${att.name}</span>
+        <span class="roster-icons">
+          ${att.isContent ? "🖥️" : ""}
+          ${att.muted ? "🔇" : "🎤"}
+        </span>
+      `;
 
-    rosterList.appendChild(li);
-  });
+      rosterList.appendChild(li);
+    });
 }
 
-
-/* -------------------------------------------------------------
- * Backend Request
- * ------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Backend: Create/Join Meeting
+// --------------------------------------------------------------------------
 async function fetchMeeting(meetingId, name, region) {
   const payload = { meetingId, name, region };
 
@@ -65,17 +76,14 @@ async function fetchMeeting(meetingId, name, region) {
     body: JSON.stringify(payload),
   });
 
-  if (!res.ok) {
-    throw new Error(`Backend error ${res.status}`);
-  }
+  if (!res.ok) throw new Error("Backend error: " + res.status);
 
   return await res.json();
 }
 
-
-/* -------------------------------------------------------------
- * Join Meeting
- * ------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Join Meeting
+// --------------------------------------------------------------------------
 async function joinMeeting() {
   try {
     const meetingId = document.getElementById("meetingId").value.trim();
@@ -83,82 +91,51 @@ async function joinMeeting() {
     const region = document.getElementById("region").value;
 
     if (!meetingId || !name) {
-      setStatus("Please enter meeting ID and your name.");
+      setStatus("Enter meeting ID + name");
       return;
     }
 
-    setStatus("Requesting meeting...");
+    setStatus("Requesting meeting…");
     joinButton.disabled = true;
 
-    const { meeting, attendee } = await fetchMeeting(meetingId, name, region);
+    const { meeting, attendee } = await fetchMeeting(
+      meetingId,
+      name,
+      region
+    );
 
     logger = new ChimeSDK.ConsoleLogger(
       "ChimeClient",
       ChimeSDK.LogLevel.INFO
     );
+
     const deviceController = new ChimeSDK.DefaultDeviceController(logger);
 
-    const configuration = new ChimeSDK.MeetingSessionConfiguration(
+    const config = new ChimeSDK.MeetingSessionConfiguration(
       meeting,
       attendee
     );
 
     meetingSession = new ChimeSDK.DefaultMeetingSession(
-      configuration,
+      config,
       logger,
       deviceController
     );
 
     audioVideo = meetingSession.audioVideo;
 
-    // -----------------------
-    // ROSTER OBSERVERS
-    // -----------------------
-    audioVideo.realtimeSubscribeToAttendeeIdPresence((attendeeId, present, externalUserId, dropped) => {
-      if (present) {
-        // Extract name (externalUserId is "name#something")
-        const displayName = externalUserId.split("#")[0];
-
-        roster[attendeeId] = {
-          name: displayName,
-          muted: false,
-          isContent: false
-        };
-      } else {
-        delete roster[attendeeId];
-      }
-      updateRosterUI();
-    });
-
-    audioVideo.realtimeSubscribeToMuteAndUnmuteLocalAudio((muted) => {
-      const localId = meetingSession.configuration.credentials.attendeeId;
-      if (roster[localId]) {
-        roster[localId].muted = muted;
-        updateRosterUI();
-      }
-    });
-
-    audioVideo.realtimeSubscribeToVolumeIndicator(
-      null,
-      (attendeeId, volume, muted, signalStrength) => {
-        if (roster[attendeeId]) {
-          roster[attendeeId].muted = muted;
-          updateRosterUI();
-        }
-      }
-    );
+    // Start audio *before* listing devices (required by some browsers)
+    await audioVideo.start();
 
     await populateDeviceLists();
     bindVideoTiles();
 
-    setStatus("Joining audio...");
-    await audioVideo.start();
-
     toggleAudioButton.textContent = "Mute";
     isAudioOn = true;
 
-    setStatus("Meeting joined. Start video when ready.");
+    registerRosterObservers();
 
+    setStatus("Joined meeting. Start video when ready.");
   } catch (err) {
     console.error(err);
     setStatus("Join error: " + err.message);
@@ -167,13 +144,45 @@ async function joinMeeting() {
   }
 }
 
+// --------------------------------------------------------------------------
+// Roster Observers
+// --------------------------------------------------------------------------
+function registerRosterObservers() {
+  const localId = meetingSession.configuration.credentials.attendeeId;
 
-/* -------------------------------------------------------------
- * Populate Devices
- * ------------------------------------------------------------- */
+  audioVideo.realtimeSubscribeToAttendeeIdPresence(
+    (attendeeId, present, externalUserId) => {
+      if (present) {
+        const name = externalUserId.split("#")[0];
+        roster[attendeeId] = { name, muted: false, isContent: false };
+
+        audioVideo.realtimeSubscribeToVolumeIndicator(
+          attendeeId,
+          (id, volume, muted) => {
+            if (roster[id]) {
+              roster[id].muted = muted;
+              updateRosterUI();
+            }
+          }
+        );
+      } else {
+        delete roster[attendeeId];
+      }
+      updateRosterUI();
+    }
+  );
+}
+
+// --------------------------------------------------------------------------
+// Device Lists
+// --------------------------------------------------------------------------
 async function populateDeviceLists() {
   const videos = await audioVideo.listVideoInputDevices();
+  const mics = await audioVideo.listAudioInputDevices();
+
   cameraSelect.innerHTML = "";
+  micSelect.innerHTML = "";
+
   videos.forEach((d) => {
     const opt = document.createElement("option");
     opt.value = d.deviceId;
@@ -181,8 +190,6 @@ async function populateDeviceLists() {
     cameraSelect.appendChild(opt);
   });
 
-  const mics = await audioVideo.listAudioInputDevices();
-  micSelect.innerHTML = "";
   mics.forEach((d) => {
     const opt = document.createElement("option");
     opt.value = d.deviceId;
@@ -190,131 +197,196 @@ async function populateDeviceLists() {
     micSelect.appendChild(opt);
   });
 
-  if (videos.length > 0) cameraSelect.value = videos[0].deviceId;
-  if (mics.length > 0) {
-    micSelect.value = mics[0].deviceId;
+  if (mics.length) {
     await audioVideo.startAudioInput(mics[0].deviceId);
+    micSelect.value = mics[0].deviceId;
   }
 }
 
-
-/* -------------------------------------------------------------
- * Video Tile Binding
- * ------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Video Tile Binding
+// --------------------------------------------------------------------------
 function bindVideoTiles() {
-  const previewContainer = document.getElementById("video-preview");
-  const remoteContainer = document.getElementById("remote-videos");
+  const preview = document.getElementById("video-preview");
+  const remote = document.getElementById("remote-videos");
 
   const observer = {
     videoTileDidUpdate: (tileState) => {
       if (!tileState.boundAttendeeId) return;
 
-      // Update roster for screen share indicator
-      if (tileState.isContent) {
-        if (roster[tileState.boundAttendeeId]) {
-          roster[tileState.boundAttendeeId].isContent = true;
-          updateRosterUI();
-        }
-      } else {
-        if (roster[tileState.boundAttendeeId]) {
-          roster[tileState.boundAttendeeId].isContent = false;
-          updateRosterUI();
-        }
+      const attendee = roster[tileState.boundAttendeeId];
+      if (attendee) {
+        attendee.isContent = tileState.isContent;
+        updateRosterUI();
       }
 
       let elementId;
       let container;
 
       if (tileState.isContent) {
-        // Screen share tile
         elementId = "screenShareTile";
-        container = remoteContainer;
+        container = remote;
       } else if (tileState.localTile) {
         elementId = "localVideo";
-        container = previewContainer;
+        container = preview;
       } else {
         elementId = `remoteVideo-${tileState.tileId}`;
-        container = remoteContainer;
+        container = remote;
       }
 
-      const videoEl = createVideoElement(elementId, container);
-      audioVideo.bindVideoElement(tileState.tileId, videoEl);
+      const el = createVideoElement(elementId, container);
+
+      audioVideo.bindVideoElement(tileState.tileId, el);
     },
 
     videoTileWasRemoved: (tileId) => {
-      const el = document.getElementById(`remoteVideo-${tileId}`);
-      if (el?.parentNode) el.parentNode.removeChild(el);
+      document
+        .querySelector(`#remoteVideo-${tileId}`)
+        ?.remove();
+      document.getElementById("screenShareTile")?.remove();
     },
   };
 
   audioVideo.addObserver(observer);
 }
 
-
 function createVideoElement(id, container) {
-  let video = document.getElementById(id);
+  let el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement("video");
+    el.id = id;
+    el.autoplay = true;
+    el.playsInline = true;
+    el.muted = id === "localVideo";
+    el.style.width = "100%";
+    el.style.height = "100%";
+    el.style.objectFit = id === "screenShareTile" ? "contain" : "cover";
 
-  if (!video) {
-    video = document.createElement("video");
-    video.id = id;
-    video.autoplay = true;
-    video.playsInline = true;
-    video.muted = id === "localVideo";
-    video.style.width = "100%";
-    video.style.height = "100%";
-    video.style.objectFit = "cover";
+    if (id === "localVideo") container.innerHTML = "";
 
-    if (id === "localVideo") {
-      container.innerHTML = "";
-    }
-
-    container.appendChild(video);
+    container.appendChild(el);
   }
-
-  return video;
+  return el;
 }
 
-
-/* -------------------------------------------------------------
- * Video Toggle
- * ------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Video Toggle
+// --------------------------------------------------------------------------
 async function toggleVideo() {
   if (!audioVideo) return;
 
   try {
     if (!isVideoOn) {
-      const deviceId = cameraSelect.value;
-      await audioVideo.startVideoInput(deviceId);
-      audioVideo.startLocalVideoTile();
+      await startVideoTransformDevice(cameraSelect.value);
 
-      isVideoOn = true;
       toggleVideoButton.textContent = "Stop Video";
-      setStatus("Video started");
-    } else {
-      audioVideo.stopLocalVideoTile();
-      await audioVideo.stopVideoInput();
-
-      if (currentProcessor) {
-        await currentProcessor.destroy();
-        currentProcessor = null;
-      }
-
-      isVideoOn = false;
-      toggleVideoButton.textContent = "Start Video";
-      bgModeSelect.value = "none";
-      setStatus("Video stopped");
+      isVideoOn = true;
+      return;
     }
+
+    stopVideoTransformDevice();
+
+    toggleVideoButton.textContent = "Start Video";
+    isVideoOn = false;
   } catch (err) {
     console.error(err);
     setStatus("Video error: " + err.message);
   }
 }
 
+// --------------------------------------------------------------------------
+// Transform Device (Blur/Image)
+// --------------------------------------------------------------------------
+async function startVideoTransformDevice(deviceId) {
+  // Clean up previous processor
+  if (currentProcessor) {
+    await currentProcessor.destroy();
+    currentProcessor = null;
+  }
+  if (currentTransformDevice) {
+    currentTransformDevice = null;
+  }
 
-/* -------------------------------------------------------------
- * Audio Toggle
- * ------------------------------------------------------------- */
-async function toggleAudio() {
+  await audioVideo.stopVideoInput();
+  await audioVideo.startVideoInput(deviceId);
+  audioVideo.startLocalVideoTile();
+}
+
+async function applyBackground(mode) {
+  if (!isVideoOn) {
+    setStatus("Start video first.");
+    return;
+  }
+
+  // Build absolute-safe path for WASM files
+  const root =
+    window.location.origin +
+    window.location.pathname.replace(/index\.html$/, "");
+
+  const paths = {
+    worker: `${root}background-filters/worker.js`,
+    wasm: `${root}background-filters/segmentation.wasm`,
+    simd: `${root}background-filters/segmentation-simd.wasm`,
+  };
+
+  try {
+    setStatus("Applying background…");
+
+    if (currentProcessor) {
+      await currentProcessor.destroy();
+      currentProcessor = null;
+    }
+
+    if (mode === "none") {
+      await startVideoTransformDevice(cameraSelect.value);
+      setStatus("Background removed.");
+      return;
+    }
+
+    if (mode === "blur") {
+      currentProcessor =
+        await ChimeSDK.BackgroundBlurVideoFrameProcessor.create({
+          paths,
+          blurStrength: 40,
+        });
+    }
+
+    if (mode === "image") {
+      if (!selectedBackgroundImage) {
+        setStatus("Upload a background image.");
+        return;
+      }
+
+      currentProcessor =
+        await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create({
+          paths,
+          imageBlob: selectedBackgroundImage,
+        });
+    }
+
+    currentTransformDevice =
+      new ChimeSDK.DefaultVideoTransformDevice(
+        audioVideo.deviceController,
+        cameraSelect.value,
+        [currentProcessor]
+      );
+
+    await audioVideo.stopVideoInput();
+    await audioVideo.startVideoInput(currentTransformDevice);
+    audioVideo.startLocalVideoTile();
+
+    setStatus("Background applied.");
+
+  } catch (err) {
+    console.error(err);
+    setStatus("Background error: " + err.message);
+  }
+}
+
+// --------------------------------------------------------------------------
+// Audio Toggle
+// --------------------------------------------------------------------------
+function toggleAudio() {
   if (!audioVideo) return;
 
   if (isAudioOn) {
@@ -328,10 +400,9 @@ async function toggleAudio() {
   }
 }
 
-
-/* -------------------------------------------------------------
- * Screen Sharing
- * ------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Screen Sharing
+// --------------------------------------------------------------------------
 async function toggleScreenShare() {
   if (!audioVideo) return;
 
@@ -343,68 +414,61 @@ async function toggleScreenShare() {
 
       await audioVideo.startContentShare(stream);
 
-      isSharingScreen = true;
       shareButton.textContent = "Stop Sharing";
-      setStatus("Screen sharing started");
-
-    } else {
-      await audioVideo.stopContentShare();
-
-      isSharingScreen = false;
-      shareButton.textContent = "Share Screen";
-      setStatus("Screen sharing stopped");
+      isSharingScreen = true;
+      return;
     }
+
+    await audioVideo.stopContentShare();
+
+    shareButton.textContent = "Share Screen";
+    isSharingScreen = false;
   } catch (err) {
-    console.error("Screen share error:", err);
+    console.error(err);
     setStatus("Screen share error: " + err.message);
   }
 }
 
-
-/* -------------------------------------------------------------
- * Leave Meeting
- * ------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Leave Meeting
+// --------------------------------------------------------------------------
 async function leaveMeeting() {
-  if (isVideoOn) {
-    audioVideo.stopLocalVideoTile();
-    await audioVideo.stopVideoInput();
-  }
+  try {
+    if (isVideoOn) stopVideoTransformDevice();
+    if (isSharingScreen) await audioVideo.stopContentShare();
 
-  if (isSharingScreen) {
-    await audioVideo.stopContentShare();
-  }
+    audioVideo.stop();
 
-  audioVideo.stop();
-
-  if (currentProcessor) {
-    await currentProcessor.destroy();
+    meetingSession = null;
+    audioVideo = null;
     currentProcessor = null;
+    currentTransformDevice = null;
+
+    document.getElementById("video-preview").innerHTML = "";
+    document.getElementById("remote-videos").innerHTML = "";
+
+    toggleVideoButton.textContent = "Start Video";
+    toggleAudioButton.textContent = "Mute";
+    shareButton.textContent = "Share Screen";
+
+    setStatus("Left meeting.");
+  } catch (err) {
+    console.error(err);
   }
-
-  document.getElementById("video-preview").innerHTML = "";
-  document.getElementById("remote-videos").innerHTML = "";
-
-  meetingSession = null;
-  audioVideo = null;
-  isVideoOn = false;
-  isAudioOn = false;
-  isSharingScreen = false;
-  selectedBackgroundImage = null;
-
-  toggleVideoButton.textContent = "Start Video";
-  toggleAudioButton.textContent = "Mute";
-  shareButton.textContent = "Share Screen";
-  bgModeSelect.value = "none";
-
-  setStatus("Left the meeting.");
 }
 
+function stopVideoTransformDevice() {
+  audioVideo.stopLocalVideoTile();
+  audioVideo.stopVideoInput();
+  if (currentProcessor) currentProcessor.destroy();
+  currentProcessor = null;
+  currentTransformDevice = null;
+}
 
-/* -------------------------------------------------------------
- * Event Bindings
- * ------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// DOM Events
+// --------------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize UI references
   statusEl = document.getElementById("status");
   joinButton = document.getElementById("joinButton");
   leaveButton = document.getElementById("leaveButton");
@@ -416,110 +480,30 @@ document.addEventListener("DOMContentLoaded", () => {
   bgModeSelect = document.getElementById("bgMode");
   rosterList = document.getElementById("participantsList");
 
-  // Attach event listeners
   joinButton.addEventListener("click", joinMeeting);
+  leaveButton.addEventListener("click", leaveMeeting);
   toggleVideoButton.addEventListener("click", toggleVideo);
   toggleAudioButton.addEventListener("click", toggleAudio);
   shareButton.addEventListener("click", toggleScreenShare);
-  leaveButton.addEventListener("click", leaveMeeting);
 
   cameraSelect.addEventListener("change", async () => {
-    if (isVideoOn && audioVideo) {
+    if (isVideoOn && audioVideo)
       await audioVideo.startVideoInput(cameraSelect.value);
-    }
   });
 
   micSelect.addEventListener("change", async () => {
-    if (audioVideo) {
+    if (audioVideo)
       await audioVideo.startAudioInput(micSelect.value);
-    }
   });
 
-  // Background image upload
-  document.getElementById("bgImage").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    selectedBackgroundImage = file;
-    setStatus("Background image loaded.");
-  });
+  document
+    .getElementById("bgImage")
+    .addEventListener("change", (e) => {
+      selectedBackgroundImage = e.target.files[0];
+      setStatus("Background image loaded.");
+    });
 
-  // Background mode change
-  bgModeSelect.addEventListener("change", async () => {
-    if (!audioVideo || !isVideoOn) {
-      setStatus("Start video first.");
-      bgModeSelect.value = "none";
-      return;
-    }
-
-    const mode = bgModeSelect.value;
-    const deviceId = cameraSelect.value;
-
-    try {
-      setStatus("Applying background...");
-
-      if (currentProcessor) {
-        await currentProcessor.destroy();
-        currentProcessor = null;
-      }
-
-      if (mode === "none") {
-        await audioVideo.stopVideoInput();
-        await audioVideo.startVideoInput(deviceId);
-        audioVideo.startLocalVideoTile();
-        setStatus("Background removed");
-        return;
-      }
-
-      // Build absolute URL paths for WASM files
-      const root = window.location.origin + window.location.pathname.replace('index.html', '');
-
-      if (mode === "blur") {
-        const spec = {
-          paths: {
-            worker: `${root}background-filters/worker.js`,
-            wasm: `${root}background-filters/segmentation.wasm`,
-            simd: `${root}background-filters/segmentation-simd.wasm`
-          },
-          blurStrength: 40
-        };
-        currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(spec);
-      }
-
-      if (mode === "image") {
-        if (!selectedBackgroundImage) {
-          setStatus("Upload a background image first.");
-          bgModeSelect.value = "none";
-          return;
-        }
-
-        const spec = {
-          paths: {
-            worker: `${root}background-filters/worker.js`,
-            wasm: `${root}background-filters/segmentation.wasm`,
-            simd: `${root}background-filters/segmentation-simd.wasm`
-          },
-          imageBlob: selectedBackgroundImage
-        };
-        currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec);
-      }
-
-      // Wrap processor in DefaultVideoTransformDevice
-      const transformDevice = new ChimeSDK.DefaultVideoTransformDevice(
-        audioVideo.deviceController,
-        deviceId,
-        [currentProcessor]
-      );
-
-      await audioVideo.stopVideoInput();
-      await audioVideo.startVideoInput(transformDevice);
-
-      audioVideo.startLocalVideoTile();
-      setStatus("Background applied.");
-
-    } catch (err) {
-      console.error("Background error:", err);
-      setStatus("Background error: " + err.message);
-      bgModeSelect.value = "none";
-    }
-  });
+  bgModeSelect.addEventListener("change", (e) =>
+    applyBackground(e.target.value)
+  );
 });
