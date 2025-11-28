@@ -1,96 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>AWS Chime Client v4.0</title>
-  <link rel="stylesheet" href="style.css" />
+<title>Test</title>
 </head>
 <body>
-  <h1>AWS Chime Client v4.0</h1>
-  
-  <!-- Authentication Status -->
-  <div id="auth-section">
-    <div id="auth-status">Not logged in</div>
-    <button id="loginButton">Login</button>
-    <button id="logoutButton" style="display:none;">Logout</button>
-  </div>
-
-  <hr />
-
-  <!-- Meeting Join Section -->
-  <div id="meeting-section" style="display:none;">
-    <div><label>Meeting ID:</label><input id="meetingId" /></div>
-    <div><label>Your Name:</label><input id="name" /></div>
-    <div><label>Region:</label>
-      <select id="region">
-        <option value="ap-southeast-2">ap-southeast-2</option>
-        <option value="us-east-1">us-east-1</option>
-        <option value="us-west-2">us-west-2</option>
-      </select>
-    </div>
-    <button id="joinButton">Join Meeting</button>
-    <button id="leaveButton">Leave</button>
-    <div id="status">Status: Waiting...</div>
-  </div>
-
-  <script>
-    // Cognito Configuration
-    const COGNITO_DOMAIN = "chime-client-1764319994-19362";
-    const CLIENT_ID = "771598hr3p7fm4j9990585r63f";
-    const REDIRECT_URI = window.location.hostname === 'localhost' ? "http://localhost:8000/" : "https://georges034302.github.io/aws-chime-client/";
-
-    let idToken = null;
-
-    function parseTokenFromHash() {
-      const hash = window.location.hash.substring(1);
-      if (!hash) return;
-      
-      const params = new URLSearchParams(hash);
-      idToken = params.get("id_token");
-      
-      if (idToken) {
-        try {
-          const payload = JSON.parse(atob(idToken.split('.')[1]));
-          const userEmail = payload.email || payload['cognito:username'] || 'Unknown User';
-          
-          document.getElementById("auth-status").textContent = `Logged in as: ${userEmail}`;
-          document.getElementById("loginButton").style.display = "none";
-          document.getElementById("logoutButton").style.display = "inline-block";
-          document.getElementById("meeting-section").style.display = "block";
-          
-          window.location.hash = '';
-        } catch (e) {
-          console.error("Token parse error:", e);
-        }
-      }
-    }
-
-    function login() {
-      const loginUrl = `https://${COGNITO_DOMAIN}.auth.ap-southeast-2.amazoncognito.com/login?client_id=${CLIENT_ID}&response_type=token&scope=openid+profile+email&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
-      window.location.href = loginUrl;
-    }
-
-    function logout() {
-      window.location.href = `https://${COGNITO_DOMAIN}.auth.ap-southeast-2.amazoncognito.com/logout?client_id=${CLIENT_ID}&logout_uri=${encodeURIComponent(REDIRECT_URI)}`;
-    }
-
-    // Enhanced fetch for JWT tokens
-    const oldFetch = window.fetch;
-    window.fetch = function (url, options = {}) {
-      if (idToken) {
-        options.headers = { ...(options.headers || {}), Authorization: idToken };
-      }
-      return oldFetch(url, options);
-    };
-
-    // Initialize
-    window.onload = () => {
-      parseTokenFromHash();
-      document.getElementById("loginButton").onclick = login;
-      document.getElementById("logoutButton").onclick = logout;
-    };
-  </script>
-
-  <!-- <script src="app.js"></script> -->
+<h1>Step-by-step test</h1>
+<button onclick="alert('Button works!')">Test Button</button>
 </body>
 </html>
