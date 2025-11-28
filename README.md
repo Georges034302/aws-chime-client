@@ -1,11 +1,13 @@
 <table>
   <tr>
-    <td><h1>AWS Chime Client</h1></td>
+    <td><h1>AWS Chime Client v3.0 🎯</h1></td>
     <td>
       <img src="https://github.com/user-attachments/assets/9db7a38b-5df2-4696-b584-ab37c5b8ba3d" width="60">
     </td>
   </tr>
 </table>
+
+> **🎉 STABLE RELEASE v3.0** - All features working including background filters!
 
 
 

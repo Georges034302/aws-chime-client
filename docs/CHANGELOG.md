@@ -68,6 +68,19 @@
 - Improved reliability and performance of background filters
 - No S3 bucket required for filter assets
 
+## v3.0.0 — 🎯 STABLE RELEASE (November 28, 2025)
+**ALL FEATURES WORKING** - Production-ready deployment
+- ✅ **Background filters fully working** - Blur and image replacement on GitHub Pages
+- ✅ **Fixed logger compatibility** - Resolved "this.logger.info is not a function" errors  
+- ✅ **Official WASM assets** - Using Amazon's CDN for reliability
+- ✅ **Proper ChimeSDK integration** - Correct API usage and parameter structure
+- ✅ **ESM module support** - Modern JavaScript architecture
+- ✅ **GitHub Pages deployment** - Live at https://georges034302.github.io/aws-chime-client
+- 🔧 Fixed DefaultVideoTransformDevice logger parameter
+- 🔧 Fixed background processor creation syntax
+- 🔧 Resolved WASM loading in production environment
+- ⚠️ Note: Background filters don't work in GitHub Codespaces (use GitHub Pages or local HTTPS)
+
 ## v4.0.0 — Planned
 - Background image presets gallery
 - Connection quality indicators
