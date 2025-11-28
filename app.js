@@ -476,7 +476,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (mode === "blur") {
-        currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create();
+        const spec = {
+          paths: {
+            worker: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/worker.js',
+            wasm: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm'
+          },
+          blurStrength: 40
+        };
+        currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(spec);
       }
 
       if (mode === "image") {
@@ -486,10 +493,14 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        // selectedBackgroundImage is already an ImageBitmap
-        currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(null, {
-          imageBlob: selectedBackgroundImage,
-        });
+        const spec = {
+          paths: {
+            worker: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/worker.js',
+            wasm: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm'
+          },
+          replacementImage: selectedBackgroundImage
+        };
+        currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec);
       }
 
       // Wrap processor in DefaultVideoTransformDevice
