@@ -348,10 +348,10 @@ async function applyBackground(mode) {
 
     if (mode === "blur") {
       currentProcessor =
-        await ChimeSDK.BackgroundBlurVideoFrameProcessor.create({
-          paths: FILTER_PATHS,
-          blurStrength: 40
-        });
+        await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(
+          { paths: FILTER_PATHS },
+          { blurStrength: 40 }
+        );
     }
 
     if (mode === "image") {
@@ -361,10 +361,10 @@ async function applyBackground(mode) {
       }
 
       currentProcessor =
-        await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create({
-          paths: FILTER_PATHS,
-          imageBlob: selectedBackgroundImage
-        });
+        await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(
+          { paths: FILTER_PATHS },
+          { imageBlob: selectedBackgroundImage }
+        );
     }
 
     currentTransformDevice =
@@ -382,7 +382,7 @@ async function applyBackground(mode) {
 
   } catch (err) {
     console.error(err);
-    setStatus("Background error: " + err.message + " (Note: Background filters don't work in GitHub Codespaces - use local server or GitHub Pages)");
+    setStatus("Background error: " + err.message);
   }
 }
 
