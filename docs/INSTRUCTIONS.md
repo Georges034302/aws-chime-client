@@ -177,8 +177,40 @@ Outputs:
 </head>
 <body>
   <!-- ... rest of HTML ... -->
+  <script src="app.js"></script>
 </body>
 </html>
+```
+
+### `app.js` (Key Functions)
+```javascript
+// Device selection - use audioVideo directly (v3 API)
+async function populateDeviceLists() {
+  const devices = await audioVideo.listVideoInputDevices();
+  cameraSelect.innerHTML = "";
+  devices.forEach((d) => {
+    const opt = document.createElement("option");
+    opt.value = d.deviceId;
+    opt.textContent = d.label || d.deviceId;
+    cameraSelect.appendChild(opt);
+  });
+
+  const mics = await audioVideo.listAudioInputDevices();
+  micSelect.innerHTML = "";
+  mics.forEach((d) => {
+    const opt = document.createElement("option");
+    opt.value = d.deviceId;
+    opt.textContent = d.label || d.deviceId;
+    micSelect.appendChild(opt);
+  });
+
+  if (devices.length > 0) {
+    await audioVideo.chooseVideoInputDevice(devices[0].deviceId);
+  }
+  if (mics.length > 0) {
+    await audioVideo.chooseAudioInputDevice(mics[0].deviceId);
+  }
+}
 ```
 
 **Note:** The frontend uses [esm.sh](https://esm.sh) CDN which automatically converts NPM packages to browser-compatible ES modules. This allows using the latest Chime SDK (v3.x) without a build step.

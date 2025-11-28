@@ -97,7 +97,7 @@ async function joinMeeting() {
 }
 
 async function populateDeviceLists() {
-  const devices = await meetingSession.audioVideo.listVideoInputDevices();
+  const devices = await audioVideo.listVideoInputDevices();
   cameraSelect.innerHTML = "";
   devices.forEach((d) => {
     const opt = document.createElement("option");
@@ -106,7 +106,7 @@ async function populateDeviceLists() {
     cameraSelect.appendChild(opt);
   });
 
-  const mics = await meetingSession.audioVideo.listAudioInputDevices();
+  const mics = await audioVideo.listAudioInputDevices();
   micSelect.innerHTML = "";
   mics.forEach((d) => {
     const opt = document.createElement("option");
@@ -115,11 +115,11 @@ async function populateDeviceLists() {
     micSelect.appendChild(opt);
   });
 
-  if (devices[0]) {
-    await meetingSession.audioVideo.chooseVideoInputDevice(devices[0].deviceId);
+  if (devices.length > 0) {
+    await audioVideo.chooseVideoInputDevice(devices[0].deviceId);
   }
-  if (mics[0]) {
-    await meetingSession.audioVideo.chooseAudioInputDevice(mics[0].deviceId);
+  if (mics.length > 0) {
+    await audioVideo.chooseAudioInputDevice(mics[0].deviceId);
   }
 }
 
