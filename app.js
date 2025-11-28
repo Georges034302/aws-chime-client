@@ -491,8 +491,11 @@ document.addEventListener("DOMContentLoaded", () => {
           img.src = selectedBackgroundImage;
         });
 
+        // Convert HTMLImageElement to ImageBitmap (required by SDK v3)
+        const imageBitmap = await createImageBitmap(img);
+
         currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(null, {
-          imageBlob: img,
+          imageBlob: imageBitmap,
         });
       }
 
