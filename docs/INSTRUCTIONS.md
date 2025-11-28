@@ -160,6 +160,26 @@ Outputs:
     Value: !Sub "https://${ApiGatewayRestApi}.execute-api.ap-southeast-2.amazonaws.com/prod/join"
 ```
 
+### `index.html` (Frontend SDK)
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AWS Chime Client</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Amazon Chime SDK JS - Using version 2.23.0 with UMD build -->
+  <script src="https://unpkg.com/amazon-chime-sdk-js@2.23.0/build/amazon-chime-sdk.min.js"></script>
+</head>
+<body>
+  <!-- ... rest of HTML ... -->
+</body>
+</html>
+```
+
+**Note:** The frontend uses Chime SDK v2.23.0 because it includes a browser-compatible UMD build. Version 3.x requires a build step with webpack/rollup.
+
 ---
 
 ## 2. Configure AWS Credentials
