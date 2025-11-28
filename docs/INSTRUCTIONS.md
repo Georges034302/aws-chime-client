@@ -507,7 +507,26 @@ audioVideo.startLocalVideoTile();
 
 **Background Replacement (app.js):**
 ```javascript
-// Load background image
+// Background image upload handler
+document.getElementById("bgImage").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    console.log("Background image file selected:", file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      selectedBackgroundImage = event.target.result;
+      console.log("Background image loaded, data URL length:", selectedBackgroundImage.length);
+      setStatus("✓ Background image loaded. Select 'Image' mode to apply.");
+    };
+    reader.onerror = (error) => {
+      console.error("Error reading image file:", error);
+      setStatus("Error loading image file.");
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// When "Image" mode is selected
 const img = new Image();
 img.src = selectedBackgroundImage; // data URL from file upload
 await img.decode();
@@ -547,11 +566,19 @@ These are automatically downloaded from AWS CDN at runtime by the SDK. No local 
 ### User Workflow
 
 1. Join meeting and start video
-2. Select "Blur" from Background Mode dropdown → blur applies immediately
-3. Upload custom image via file input
-4. Select "Image" from dropdown → custom background applies
+2. **Upload background image**: Click "Background Image" file input and select an image
+   - Console will log: "Background image file selected: [filename]"
+   - Status will show: "✓ Background image loaded. Select 'Image' mode to apply."
+3. Select "Blur" from Background Mode dropdown → blur applies immediately
+4. Select "Image" from dropdown → custom background applies (requires image upload first)
 5. Select "None" to remove effects
 6. Switch cameras while background effect is preserved
+
+**Debugging Image Upload:**
+- Open browser console (F12 → Console)
+- Upload an image and verify console logs appear
+- If no logs appear, check file input element exists with `id="bgImage"`
+- Check for FileReader errors in console
 
 ---
 
