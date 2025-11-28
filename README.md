@@ -106,13 +106,15 @@ aws-chime-client/
 │       └── segmentation-simd.wasm  ← SIMD-optimized model
 ├── backend/
 │   ├── createMeeting.js       ← Lambda handler
-│   └── package.json           ← Dependencies
+│   └── package.json           ← Backend dependencies
 ├── template.yaml              ← SAM CloudFormation template
+├── samconfig.toml             ← SAM CLI configuration
 ├── docs/
 │   ├── INSTRUCTIONS.md        ← Deployment guide
 │   ├── CHANGELOG.md           ← Version history
-│   └── ROADMAP.md             ← Feature roadmap
-└── img/                       ← Assets
+│   ├── ROADMAP.md             ← Feature roadmap
+│   └── CONTRIBUTING.md        ← Contribution guidelines
+└── img/                       ← Assets (logos, diagrams)
 ```
 
 ---

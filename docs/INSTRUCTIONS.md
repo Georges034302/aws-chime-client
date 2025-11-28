@@ -13,23 +13,27 @@ aws-chime-client/
 ├── LICENSE
 ├── README.md
 ├── app.js                     ← Frontend JavaScript (SDK v3 + Background Filters)
+├── index.html                 ← Frontend HTML (loads SDK v3 + background filters)
+├── style.css                  ← Frontend CSS
+├── public/
+│   └── background-filters/    ← WASM files for background filters
+│       ├── worker.js          ← Web Worker for processing
+│       ├── segmentation.wasm  ← Segmentation model
+│       └── segmentation-simd.wasm  ← SIMD-optimized model
 ├── backend/
 │   ├── createMeeting.js       ← Lambda handler (AWS SDK v3)
-│   └── package.json           ← Node.js dependencies
-├── cleanup.sh                 ← Cleanup script
-├── docs/
-│   ├── CHANGELOG.md
-│   ├── CONTRIBUTING.md
-│   ├── INSTRUCTIONS.md        ← This file
-│   ├── ROADMAP.md
-│   └── index.md
-├── img/
-│   ├── aws_architecture.png
-│   └── logo_dark.png
-├── index.html                 ← Frontend HTML (loads SDK v3 + background filters)
+│   └── package.json           ← Backend dependencies
+├── template.yaml              ← SAM CloudFormation template
 ├── samconfig.toml             ← SAM deployment config (auto-generated)
-├── style.css                  ← Frontend CSS
-└── template.yaml              ← SAM template
+├── docs/
+│   ├── INSTRUCTIONS.md        ← This file
+│   ├── CHANGELOG.md           ← Version history
+│   ├── ROADMAP.md             ← Feature roadmap
+│   ├── CONTRIBUTING.md        ← Contribution guidelines
+│   └── index.md
+└── img/
+    ├── aws_architecture.png   ← Architecture diagram
+    └── logo_dark.png          ← Logo
 ```
 
 **Key Files:**
