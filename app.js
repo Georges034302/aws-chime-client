@@ -473,9 +473,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (mode === "blur") {
         const spec = {
           paths: {
-            worker: './public/background-filters/worker.js',
-            wasm: './public/background-filters/segmentation.wasm',
-            simd: './public/background-filters/segmentation-simd.wasm'
+            worker: 'https://georges034302.github.io/aws-chime-client/public/background-filters/worker.js',
+            wasm: 'https://georges034302.github.io/aws-chime-client/public/background-filters/segmentation.wasm',
+            simd: 'https://georges034302.github.io/aws-chime-client/public/background-filters/segmentation-simd.wasm'
           },
           blurStrength: 40
         };
@@ -491,9 +491,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spec = {
           paths: {
-            worker: './public/background-filters/worker.js',
-            wasm: './public/background-filters/segmentation.wasm',
-            simd: './public/background-filters/segmentation-simd.wasm'
+            worker: 'https://georges034302.github.io/aws-chime-client/public/background-filters/worker.js',
+            wasm: 'https://georges034302.github.io/aws-chime-client/public/background-filters/segmentation.wasm',
+            simd: 'https://georges034302.github.io/aws-chime-client/public/background-filters/segmentation-simd.wasm'
           },
           imageBlob: selectedBackgroundImage
         };
