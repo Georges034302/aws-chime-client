@@ -8,12 +8,12 @@
  */
 import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
 
-// Use local working WASM files with proper worker
+// Use local working WASM files with correct names that worker expects
 const ROOT = window.location.origin + window.location.pathname.replace(/index\.html$/, "");
 const FILTER_PATHS = {
   worker: `${ROOT}background-filters/worker.js`,
-  wasm: `${ROOT}background-filters/segmentation.wasm`,
-  simd: `${ROOT}background-filters/segmentation-simd.wasm`,
+  wasm: `${ROOT}background-filters/_cwt-wasm.wasm`,
+  simd: `${ROOT}background-filters/_cwt-wasm-simd.wasm`,
 };
 
 const API_URL =
