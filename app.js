@@ -288,12 +288,20 @@ micSelect.addEventListener("change", async () => {
 document.getElementById("bgImage").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
+    console.log("Background image file selected:", file.name);
     const reader = new FileReader();
     reader.onload = (event) => {
       selectedBackgroundImage = event.target.result;
-      setStatus("Background image loaded. Select 'Image' mode to apply.");
+      console.log("Background image loaded, data URL length:", selectedBackgroundImage.length);
+      setStatus("✓ Background image loaded. Select 'Image' mode to apply.");
+    };
+    reader.onerror = (error) => {
+      console.error("Error reading image file:", error);
+      setStatus("Error loading image file.");
     };
     reader.readAsDataURL(file);
+  } else {
+    console.log("No file selected");
   }
 });
 
