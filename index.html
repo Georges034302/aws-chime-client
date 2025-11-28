@@ -5,8 +5,11 @@
   <title>AWS Chime Client</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
-  <!-- Amazon Chime SDK JS - Using version with UMD build -->
-  <script src="https://unpkg.com/amazon-chime-sdk-js@2.23.0/build/amazon-chime-sdk.min.js"></script>
+  <!-- Amazon Chime SDK JS - Using esm.sh for browser module loading -->
+  <script type="module">
+    import * as ChimeSDK from 'https://esm.sh/amazon-chime-sdk-js@3.20.0';
+    window.ChimeSDK = ChimeSDK;
+  </script>
 </head>
 <body>
   <header class="app-header">
