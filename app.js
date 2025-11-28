@@ -116,10 +116,10 @@ async function populateDeviceLists() {
   });
 
   if (devices.length > 0) {
-    await audioVideo.chooseVideoInputDevice(devices[0].deviceId);
+    await audioVideo.startVideoInput(devices[0].deviceId);
   }
   if (mics.length > 0) {
-    await audioVideo.chooseAudioInputDevice(mics[0].deviceId);
+    await audioVideo.startAudioInput(mics[0].deviceId);
   }
 }
 
