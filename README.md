@@ -1,5 +1,4 @@
-# AWS Chime Client
-[<img src="https://github.com/user-attachments/assets/9db7a38b-5df2-4696-b584-ab37c5b8ba3d" width="100" style="margin-right: 20px; margin-top: 5px;" />](https://georges034302.github.io/aws-chime-client/)
+# [AWS Chime Client <img src="https://github.com/user-attachments/assets/9db7a38b-5df2-4696-b584-ab37c5b8ba3d" width="40" style="margin-right: 20px; margin-top: 5px;" />](https://georges034302.github.io/aws-chime-client/)
 
 ## 🌐 Overview
 A lightweight, browser‑based **Amazon Chime SDK v3** client with advanced video features including background blur, virtual backgrounds, screen sharing, and real-time participant roster.
