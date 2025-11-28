@@ -482,10 +482,11 @@ document.addEventListener("DOMContentLoaded", () => {
             wasm: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm',
             simd: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation-simd.wasm'
           },
-          blurStrength: 40,
-          logger: meetingSession.logger
+          blurStrength: 40
         };
-        currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(spec);
+        currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(spec, {
+          logger: new ChimeSDK.ConsoleLogger('BackgroundFilter', ChimeSDK.LogLevel.INFO)
+        });
       }
 
       if (mode === "image") {
@@ -501,10 +502,11 @@ document.addEventListener("DOMContentLoaded", () => {
             wasm: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm',
             simd: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation-simd.wasm'
           },
-          replacementImage: selectedBackgroundImage,
-          logger: meetingSession.logger
+          replacementImage: selectedBackgroundImage
         };
-        currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec);
+        currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec, {
+          logger: new ChimeSDK.ConsoleLogger('BackgroundFilter', ChimeSDK.LogLevel.INFO)
+        });
       }
 
       // Wrap processor in DefaultVideoTransformDevice
