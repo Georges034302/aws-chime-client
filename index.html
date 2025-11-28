@@ -77,8 +77,8 @@
           <label for="bgMode">Background</label>
           <select id="bgMode">
             <option value="none">None</option>
-            <option value="blur">Blur</option>
-            <option value="image">Image</option>
+            <option value="blur" disabled>Blur (Temporarily Disabled)</option>
+            <option value="image" disabled>Image (Temporarily Disabled)</option>
           </select>
         </div>
         <div class="control-group">
@@ -233,22 +233,19 @@
      *************************************************************/
     const oldFetch = window.fetch;
     window.fetch = function (url, options = {}) {
-      // Only add Authorization header for our backend API calls
-      const isBackendAPI = url.includes('execute-api.ap-southeast-2.amazonaws.com') || 
-                          (url.includes('localhost') && url.includes('/join')) ||
-                          (url.includes('127.0.0.1') && url.includes('/join'));
+      // Only add Authorization header for our specific Lambda API endpoint
+      const isOurLambdaAPI = url === 'https://jo2o2rgg5l.execute-api.ap-southeast-2.amazonaws.com/prod/join';
       
-      if (window.idToken && isBackendAPI) {
-        console.log("🔐 Adding Authorization header to backend API:", url);
+      if (window.idToken && isOurLambdaAPI) {
+        console.log("🔐 Adding Authorization header to Lambda API");
         options.headers = {
           ...(options.headers || {}),
           Authorization: window.idToken
         };
-      } else if (isBackendAPI) {
-        console.log("⚠️ No token available for backend API:", url);
-      } else {
-        console.log("📦 Resource request (no auth):", url.substring(0, 80) + "...");
+      } else if (isOurLambdaAPI) {
+        console.log("⚠️ No token available for Lambda API");
       }
+      // No logging for other requests to reduce console noise
       return oldFetch(url, options);
     };
 
