@@ -1,11 +1,6 @@
-<table>
-  <tr>
-    <td><h1>AWS Chime Client</h1></td>
-    <td>
-      <img src="https://github.com/user-attachments/assets/9db7a38b-5df2-4696-b584-ab37c5b8ba3d" width="60">
-    </td>
-  </tr>
-</table>
+# [<img src="https://github.com/user-attachments/assets/9db7a38b-5df2-4696-b584-ab37c5b8ba3d" width="50" /> AWS Chime Client](https://georges034302.github.io/aws-chime-client/)
+
+
 
 
 
