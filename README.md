@@ -82,7 +82,7 @@ All media flows through Amazon Chime's WebRTC infrastructure — the backend onl
 - Screen sharing controls
 - Real-time participant roster
 - Transform device pipeline
-- WASM models loaded from AWS CDN at runtime
+- WASM models hosted in `public/background-filters/` directory
 
 **Backend (AWS Lambda)**
 - Creates meetings and attendees via AWS SDK v3
@@ -99,6 +99,11 @@ aws-chime-client/
 ├── app.js                     ← Frontend logic (SDK v3)
 ├── index.html                 ← HTML structure
 ├── style.css                  ← Styling
+├── public/
+│   └── background-filters/    ← WASM files for background filters
+│       ├── worker.js          ← Web Worker for processing
+│       ├── segmentation.wasm  ← Segmentation model
+│       └── segmentation-simd.wasm  ← SIMD-optimized model
 ├── backend/
 │   ├── createMeeting.js       ← Lambda handler
 │   └── package.json           ← Dependencies

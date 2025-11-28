@@ -473,9 +473,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (mode === "blur") {
         const spec = {
           paths: {
-            worker: './libs/background-filters/worker.js',
-            wasm: './libs/background-filters/segmentation.wasm',
-            simd: './libs/background-filters/segmentation.wasm'
+            worker: './public/background-filters/worker.js',
+            wasm: './public/background-filters/segmentation.wasm',
+            simd: './public/background-filters/segmentation-simd.wasm'
           },
           blurStrength: 40
         };
@@ -491,9 +491,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spec = {
           paths: {
-            worker: './libs/background-filters/worker.js',
-            wasm: './libs/background-filters/segmentation.wasm',
-            simd: './libs/background-filters/segmentation.wasm'
+            worker: './public/background-filters/worker.js',
+            wasm: './public/background-filters/segmentation.wasm',
+            simd: './public/background-filters/segmentation-simd.wasm'
           },
           imageBlob: selectedBackgroundImage
         };

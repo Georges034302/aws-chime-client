@@ -59,6 +59,15 @@
 - Roster observers using Chime SDK v3 realtime subscriptions
 - Professional Zoom/Teams-style participant panel
 
+## v3.1.0 — Background Filters with Local WASM Hosting
+- Added local WASM files hosted in `public/background-filters/`
+- Background blur and image replacement fully functional via GitHub Pages
+- Custom Web Worker for background filter processing
+- Segmentation models (regular and SIMD-optimized) included
+- Eliminated dependency on external CDN for WASM files
+- Improved reliability and performance of background filters
+- No S3 bucket required for filter assets
+
 ## v4.0.0 — Planned
 - Background image presets gallery
 - Connection quality indicators
