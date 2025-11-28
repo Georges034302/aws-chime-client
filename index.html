@@ -5,11 +5,7 @@
   <title>AWS Chime Client</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
-  <!-- Load Chime SDK (browser ESM build) -->
-  <script type="module">
-    import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
-    window.ChimeSDK = ChimeSDK;
-  </script>
+  <!-- ChimeSDK is imported directly in app.js as a module -->
 </head>
 <body>
   <div class="main-container">
@@ -80,6 +76,6 @@
       </div>
     </main>
   </div>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
