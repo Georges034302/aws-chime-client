@@ -233,11 +233,14 @@
      *************************************************************/
     const oldFetch = window.fetch;
     window.fetch = function (url, options = {}) {
-      if (idToken) {
+      if (window.idToken) {
+        console.log("🔐 Adding Authorization header to request:", url);
         options.headers = {
           ...(options.headers || {}),
-          Authorization: idToken
+          Authorization: window.idToken
         };
+      } else {
+        console.log("⚠️ No token available for request:", url);
       }
       return oldFetch(url, options);
     };
