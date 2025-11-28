@@ -3,82 +3,95 @@
 <head>
   <meta charset="UTF-8" />
   <title>AWS Chime Client</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
+  <!-- ChimeSDK is imported directly in app.js as a module -->
 </head>
 
 <body>
-  <h1>AWS Chime Client</h1>
+  <div class="main-container">
+    <!-- Sidebar: Authentication & Join -->
+    <aside class="sidebar">
+      <!-- Authentication Status -->
+      <section class="card">
+        <h2>Authentication</h2>
+        <div id="auth-status" style="margin-bottom:10px; font-weight:bold;">
+          Not logged in
+        </div>
+        <div class="buttons-row">
+          <button id="loginButton" class="btn primary">Login</button>
+          <button id="logoutButton" class="btn danger" style="display:none;">Logout</button>
+        </div>
+      </section>
 
-  <!-- Authentication Status -->
-  <div id="auth-section">
-    <div id="auth-status" style="margin-bottom:10px; font-weight:bold; color:#333;">
-      Not logged in
-    </div>
+      <!-- Meeting Join Section -->
+      <section id="meeting-section" class="card" style="display:none;">
+        <h2>Join a Meeting</h2>
+        <label for="meetingId">Meeting ID</label>
+        <input id="meetingId" type="text" placeholder="Enter meeting ID" />
+        <label for="name">Your Name</label>
+        <input id="name" type="text" placeholder="Your display name" />
+        <label for="region">Region</label>
+        <select id="region">
+          <option value="ap-southeast-2">ap-southeast-2</option>
+          <option value="us-east-1">us-east-1</option>
+          <option value="us-west-2">us-west-2</option>
+        </select>
+        <div class="buttons-row">
+          <button id="joinButton" class="btn primary">Join</button>
+          <button id="leaveButton" class="btn danger">Leave</button>
+        </div>
+        <p id="status" class="status">Status: Waiting...</p>
+      </section>
 
-    <button id="loginButton">Login</button>
-    <button id="logoutButton" style="display:none;">Logout</button>
-  </div>
+      <!-- Participants -->
+      <section class="card">
+        <h2>Participants</h2>
+        <ul id="participantsList" class="participants-list"></ul>
+      </section>
+    </aside>
 
-  <hr />
-
-  <!-- Meeting Join Section -->
-  <div id="meeting-section" style="display:none;">
-    <div>
-      <label>Meeting ID:</label>
-      <input id="meetingId" />
-    </div>
-
-    <div>
-      <label>Your Name:</label>
-      <input id="name" />
-    </div>
-
-    <div>
-      <label>Region:</label>
-      <select id="region">
-        <option value="ap-southeast-2">ap-southeast-2</option>
-        <option value="us-east-1">us-east-1</option>
-        <option value="us-west-2">us-west-2</option>
-      </select>
-    </div>
-
-    <button id="joinButton">Join Meeting</button>
-    <button id="leaveButton">Leave</button>
-
-    <div id="status" style="margin-top:10px; color:#444;">Status: Waiting...</div>
-
-    <hr />
-
-    <!-- Devices -->
-    <div>
-      <label>Camera:</label>
-      <select id="cameraSelect"></select>
-    </div>
-    <div>
-      <label>Microphone:</label>
-      <select id="micSelect"></select>
-    </div>
-
-    <div>
-      <label>Background:</label>
-      <select id="bgMode">
-        <option value="none">None</option>
-        <option value="blur">Blur</option>
-        <option value="image">Image</option>
-      </select>
-      <input type="file" id="bgImage" accept="image/*" />
-    </div>
-
-    <button id="toggleVideo">Start Video</button>
-    <button id="toggleAudio">Mute</button>
-    <button id="shareScreen">Share Screen</button>
-
-    <h3>Participants</h3>
-    <ul id="participantsList"></ul>
-
-    <div id="video-preview" class="video-box"></div>
-    <div id="remote-videos" class="video-box"></div>
-
+    <!-- Main Content: Video & Controls -->
+    <main class="content">
+      <h2>Video & Background</h2>
+      <div class="video-area">
+        <div class="video-box">
+          <h3>Local Video</h3>
+          <div id="video-preview" class="video-tile"></div>
+        </div>
+        <div class="video-box">
+          <h3>Remote Videos</h3>
+          <div id="remote-videos" class="video-tile"></div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="control-group">
+          <label for="cameraSelect">Camera</label>
+          <select id="cameraSelect"></select>
+        </div>
+        <div class="control-group">
+          <label for="micSelect">Microphone</label>
+          <select id="micSelect"></select>
+        </div>
+        <div class="control-group">
+          <label for="bgMode">Background</label>
+          <select id="bgMode">
+            <option value="none">None</option>
+            <option value="blur">Blur</option>
+            <option value="image">Image</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="bgImage">Upload Image</label>
+          <input id="bgImage" type="file" accept="image/*" />
+        </div>
+      </div>
+      <div class="buttons-row">
+        <button id="toggleVideo" class="btn">Start Video</button>
+        <button id="toggleAudio" class="btn">Mute</button>
+        <button id="shareScreen" class="btn">Share Screen</button>
+      </div>
+    </main>
   </div>
 
   <script>
@@ -87,35 +100,103 @@
      *************************************************************/
     const COGNITO_DOMAIN = "chime-client-1764319994-19362";          
     const CLIENT_ID = "771598hr3p7fm4j9990585r63f";                 
-    const REDIRECT_URI = window.location.hostname === 'localhost' ? "http://localhost:8000/" : "https://georges034302.github.io/aws-chime-client/";          
+    
+    // Detect environment and set appropriate redirect URI
+    function getRedirectURI() {
+      const hostname = window.location.hostname;
+      const origin = window.location.origin;
+      
+      if (hostname === 'localhost') {
+        return "http://localhost:8000/";
+      } else if (hostname.includes('.app.github.dev')) {
+        // Codespaces environment
+        return origin + "/";
+      } else if (hostname === 'georges034302.github.io') {
+        return "https://georges034302.github.io/aws-chime-client/";
+      } else {
+        // Fallback - use current origin
+        return origin + "/";
+      }
+    }
+    
+    const REDIRECT_URI = getRedirectURI();
     const RESPONSE_TYPE = "token";
     const SCOPES = "openid+profile+email";
 
+    // Debug logging
+    console.log("Environment detected:");
+    console.log("- Hostname:", window.location.hostname);
+    console.log("- Origin:", window.location.origin);
+    console.log("- Redirect URI:", REDIRECT_URI);
+
     let idToken = null;
     let userEmail = null;
+    
+    // Make idToken available globally for app.js
+    window.idToken = null;
 
     /*************************************************************
      * LOGIN + TOKEN PARSING
      *************************************************************/
     function parseTokenFromHash() {
       const hash = window.location.hash.substring(1);
-      if (!hash) return;
+      console.log("🔍 Checking URL hash for tokens:", hash);
+      
+      if (!hash) {
+        console.log("ℹ️ No hash found in URL");
+        return;
+      }
 
       const params = new URLSearchParams(hash);
+      console.log("📊 Hash parameters found:", Object.fromEntries(params));
+      
+      // Check for errors in the hash
+      const error = params.get("error");
+      const errorDescription = params.get("error_description");
+      
+      if (error) {
+        console.error("❌ OAuth error:", error);
+        console.error("❌ Error description:", errorDescription);
+        document.getElementById("auth-status").textContent = 
+          `Authentication error: ${error} - ${errorDescription}`;
+        document.getElementById("auth-status").style.color = "red";
+        return;
+      }
+      
       idToken = params.get("id_token");
+      const accessToken = params.get("access_token");
 
       if (idToken) {
-        const parts = idToken.split(".");
-        const decoded = JSON.parse(atob(parts[1]));
-        userEmail = decoded.email || decoded.username;
+        try {
+          const parts = idToken.split(".");
+          const decoded = JSON.parse(atob(parts[1]));
+          userEmail = decoded.email || decoded.username || decoded.sub;
+          
+          // Make token available globally for app.js
+          window.idToken = idToken;
+          
+          console.log("✅ Successfully parsed token for user:", userEmail);
+          console.log("📄 Token payload:", decoded);
 
-        document.getElementById("auth-status").textContent =
-          "Logged in as: " + userEmail;
+          document.getElementById("auth-status").textContent =
+            "Logged in as: " + userEmail;
+          document.getElementById("auth-status").style.color = "#e6edf3";
 
-        document.getElementById("loginButton").style.display = "none";
-        document.getElementById("logoutButton").style.display = "inline-block";
+          document.getElementById("loginButton").style.display = "none";
+          document.getElementById("logoutButton").style.display = "inline-block";
 
-        document.getElementById("meeting-section").style.display = "block";
+          document.getElementById("meeting-section").style.display = "block";
+          
+          // Clear the hash from URL for security
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+        } catch (e) {
+          console.error("❌ Error parsing ID token:", e);
+          document.getElementById("auth-status").textContent = "Error parsing authentication token";
+          document.getElementById("auth-status").style.color = "red";
+        }
+      } else {
+        console.log("⚠️ No id_token found in hash");
       }
     }
 
@@ -125,10 +206,23 @@
         `client_id=${CLIENT_ID}&response_type=${RESPONSE_TYPE}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
         `&scope=${SCOPES}`;
 
+      console.log("🚀 Initiating login with URL:", url);
+      console.log("📋 Login parameters:");
+      console.log("- Domain:", COGNITO_DOMAIN);
+      console.log("- Client ID:", CLIENT_ID);
+      console.log("- Redirect URI:", REDIRECT_URI);
+      console.log("- Encoded Redirect URI:", encodeURIComponent(REDIRECT_URI));
+      console.log("- Scopes:", SCOPES);
+
       window.location.href = url;
     }
 
     function logout() {
+      // Clear tokens
+      idToken = null;
+      window.idToken = null;
+      userEmail = null;
+      
       window.location.href =
         `https://${COGNITO_DOMAIN}.auth.ap-southeast-2.amazoncognito.com/logout?` +
         `client_id=${CLIENT_ID}&logout_uri=${encodeURIComponent(REDIRECT_URI)}`;
@@ -157,6 +251,6 @@
     };
   </script>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

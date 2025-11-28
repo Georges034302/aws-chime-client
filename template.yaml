@@ -82,9 +82,13 @@ Resources:
       CallbackURLs:
         - http://localhost:8000/
         - https://georges034302.github.io/aws-chime-client/
+        - https://psychic-couscous-vpjv9v66xgf6wp5-8000.app.github.dev/
       LogoutURLs:
         - http://localhost:8000/
         - https://georges034302.github.io/aws-chime-client/
+        - https://psychic-couscous-vpjv9v66xgf6wp5-8000.app.github.dev/
+      SupportedIdentityProviders:
+        - COGNITO
 
   ###########################################################
   # COGNITO HOSTED UI DOMAIN
