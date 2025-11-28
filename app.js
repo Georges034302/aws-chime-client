@@ -10,6 +10,14 @@
  */
 import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
 
+// Proper path construction for background filters
+const ROOT = window.location.origin + window.location.pathname.replace(/index\.html$/, "");
+const FILTER_PATHS = {
+  worker: `${ROOT}background-filters/worker.js`,
+  wasm: `${ROOT}background-filters/segmentation.wasm`,
+  simd: `${ROOT}background-filters/segmentation-simd.wasm`,
+};
+
 const API_URL =
   "https://ytzz5sx9r1.execute-api.ap-southeast-2.amazonaws.com/prod/join";
 
@@ -324,17 +332,6 @@ async function applyBackground(mode) {
     return;
   }
 
-  // Build absolute-safe path for WASM files
-  const root =
-    window.location.origin +
-    window.location.pathname.replace(/index\.html$/, "");
-
-  const paths = {
-    worker: `${root}background-filters/worker.js`,
-    wasm: `${root}background-filters/segmentation.wasm`,
-    simd: `${root}background-filters/segmentation-simd.wasm`,
-  };
-
   try {
     setStatus("Applying background…");
 
@@ -352,8 +349,8 @@ async function applyBackground(mode) {
     if (mode === "blur") {
       currentProcessor =
         await ChimeSDK.BackgroundBlurVideoFrameProcessor.create({
-          paths,
-          blurStrength: 40,
+          paths: FILTER_PATHS,
+          blurStrength: 40
         });
     }
 
@@ -365,8 +362,8 @@ async function applyBackground(mode) {
 
       currentProcessor =
         await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create({
-          paths,
-          imageBlob: selectedBackgroundImage,
+          paths: FILTER_PATHS,
+          imageBlob: selectedBackgroundImage
         });
     }
 
@@ -385,7 +382,7 @@ async function applyBackground(mode) {
 
   } catch (err) {
     console.error(err);
-    setStatus("Background error: " + err.message);
+    setStatus("Background error: " + err.message + " (Note: Background filters don't work in GitHub Codespaces - use local server or GitHub Pages)");
   }
 }
 
