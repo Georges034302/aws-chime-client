@@ -20,17 +20,9 @@ let isSharingScreen = false;
 let currentProcessor = null;
 let selectedBackgroundImage = null;
 
-// UI References
-const statusEl = document.getElementById("status");
-const joinButton = document.getElementById("joinButton");
-const leaveButton = document.getElementById("leaveButton");
-const toggleVideoButton = document.getElementById("toggleVideo");
-const toggleAudioButton = document.getElementById("toggleAudio");
-const shareButton = document.getElementById("shareButton");
-const cameraSelect = document.getElementById("cameraSelect");
-const micSelect = document.getElementById("micSelect");
-const bgModeSelect = document.getElementById("bgMode");
-const rosterList = document.getElementById("rosterList");
+// UI References - will be initialized after DOM loads
+let statusEl, joinButton, leaveButton, toggleVideoButton, toggleAudioButton;
+let shareButton, cameraSelect, micSelect, bgModeSelect, rosterList;
 const roster = {}; // attendeeId → { name, muted, isContent }
 
 
@@ -38,7 +30,7 @@ const roster = {}; // attendeeId → { name, muted, isContent }
  * Helper
  * ------------------------------------------------------------- */
 function setStatus(msg) {
-  statusEl.textContent = msg;
+  if (statusEl) statusEl.textContent = msg;
 }
 
 function updateRosterUI() {
@@ -235,8 +227,7 @@ function bindVideoTiles() {
       if (tileState.isContent) {
         // Screen share tile
         elementId = "screenShareTile";
-        container = document.getElementById("screen-share-section");
-        document.getElementById("screen-share-section").classList.remove("hidden");
+        container = remoteContainer;
       } else if (tileState.localTile) {
         elementId = "localVideo";
         container = previewContainer;
@@ -252,12 +243,6 @@ function bindVideoTiles() {
     videoTileWasRemoved: (tileId) => {
       const el = document.getElementById(`remoteVideo-${tileId}`);
       if (el?.parentNode) el.parentNode.removeChild(el);
-      
-      // Hide screen share section if screen share tile was removed
-      const screenShareEl = document.getElementById("screenShareTile");
-      if (screenShareEl && !document.querySelector("#screenShareTile video")) {
-        document.getElementById("screen-share-section").classList.add("hidden");
-      }
     },
   };
 
@@ -376,89 +361,6 @@ async function toggleScreenShare() {
 
 
 /* -------------------------------------------------------------
- * Background Image Upload
- * ------------------------------------------------------------- */
-document.getElementById("bgImage").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    selectedBackgroundImage = event.target.result;
-    setStatus("Background image loaded.");
-  };
-  reader.readAsDataURL(file);
-});
-
-
-/* -------------------------------------------------------------
- * Background Mode Change
- * ------------------------------------------------------------- */
-bgModeSelect.addEventListener("change", async () => {
-  if (!audioVideo || !isVideoOn) {
-    setStatus("Start video first.");
-    return;
-  }
-
-  const mode = bgModeSelect.value;
-  const deviceId = cameraSelect.value;
-
-  try {
-    setStatus("Applying background...");
-
-    if (currentProcessor) {
-      await currentProcessor.destroy();
-      currentProcessor = null;
-    }
-
-    if (mode === "none") {
-      await audioVideo.stopVideoInput();
-      await audioVideo.startVideoInput(deviceId);
-      audioVideo.startLocalVideoTile();
-      setStatus("Background removed");
-      return;
-    }
-
-    if (mode === "blur") {
-      currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create();
-    }
-
-    if (mode === "image") {
-      if (!selectedBackgroundImage) {
-        setStatus("Upload a background image first.");
-        bgModeSelect.value = "none";
-        return;
-      }
-
-      const img = new Image();
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = selectedBackgroundImage;
-      });
-
-      currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(null, {
-        imageBlob: img,
-      });
-    }
-
-    const transformDevice = await currentProcessor.createTransformDevice(deviceId);
-
-    await audioVideo.stopVideoInput();
-    await audioVideo.startVideoInput(transformDevice);
-
-    audioVideo.startLocalVideoTile();
-    setStatus("Background applied.");
-
-  } catch (err) {
-    console.error("Background error:", err);
-    setStatus("Background error: " + err.message);
-    bgModeSelect.value = "none";
-  }
-});
-
-
-/* -------------------------------------------------------------
  * Leave Meeting
  * ------------------------------------------------------------- */
 async function leaveMeeting() {
@@ -500,20 +402,112 @@ async function leaveMeeting() {
 /* -------------------------------------------------------------
  * Event Bindings
  * ------------------------------------------------------------- */
-joinButton.addEventListener("click", joinMeeting);
-toggleVideoButton.addEventListener("click", toggleVideo);
-toggleAudioButton.addEventListener("click", toggleAudio);
-shareButton.addEventListener("click", toggleScreenShare);
-leaveButton.addEventListener("click", leaveMeeting);
+document.addEventListener("DOMContentLoaded", () => {
+  // Initialize UI references
+  statusEl = document.getElementById("status");
+  joinButton = document.getElementById("joinButton");
+  leaveButton = document.getElementById("leaveButton");
+  toggleVideoButton = document.getElementById("toggleVideo");
+  toggleAudioButton = document.getElementById("toggleAudio");
+  shareButton = document.getElementById("shareScreen");
+  cameraSelect = document.getElementById("cameraSelect");
+  micSelect = document.getElementById("micSelect");
+  bgModeSelect = document.getElementById("bgMode");
+  rosterList = document.getElementById("participantsList");
 
-cameraSelect.addEventListener("change", async () => {
-  if (isVideoOn && audioVideo) {
-    await audioVideo.startVideoInput(cameraSelect.value);
-  }
-});
+  // Attach event listeners
+  joinButton.addEventListener("click", joinMeeting);
+  toggleVideoButton.addEventListener("click", toggleVideo);
+  toggleAudioButton.addEventListener("click", toggleAudio);
+  shareButton.addEventListener("click", toggleScreenShare);
+  leaveButton.addEventListener("click", leaveMeeting);
 
-micSelect.addEventListener("change", async () => {
-  if (audioVideo) {
-    await audioVideo.startAudioInput(micSelect.value);
-  }
+  cameraSelect.addEventListener("change", async () => {
+    if (isVideoOn && audioVideo) {
+      await audioVideo.startVideoInput(cameraSelect.value);
+    }
+  });
+
+  micSelect.addEventListener("change", async () => {
+    if (audioVideo) {
+      await audioVideo.startAudioInput(micSelect.value);
+    }
+  });
+
+  // Background image upload
+  document.getElementById("bgImage").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      selectedBackgroundImage = event.target.result;
+      setStatus("Background image loaded.");
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Background mode change
+  bgModeSelect.addEventListener("change", async () => {
+    if (!audioVideo || !isVideoOn) {
+      setStatus("Start video first.");
+      return;
+    }
+
+    const mode = bgModeSelect.value;
+    const deviceId = cameraSelect.value;
+
+    try {
+      setStatus("Applying background...");
+
+      if (currentProcessor) {
+        await currentProcessor.destroy();
+        currentProcessor = null;
+      }
+
+      if (mode === "none") {
+        await audioVideo.stopVideoInput();
+        await audioVideo.startVideoInput(deviceId);
+        audioVideo.startLocalVideoTile();
+        setStatus("Background removed");
+        return;
+      }
+
+      if (mode === "blur") {
+        currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create();
+      }
+
+      if (mode === "image") {
+        if (!selectedBackgroundImage) {
+          setStatus("Upload a background image first.");
+          bgModeSelect.value = "none";
+          return;
+        }
+
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = selectedBackgroundImage;
+        });
+
+        currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(null, {
+          imageBlob: img,
+        });
+      }
+
+      const transformDevice = await currentProcessor.createTransformDevice(deviceId);
+
+      await audioVideo.stopVideoInput();
+      await audioVideo.startVideoInput(transformDevice);
+
+      audioVideo.startLocalVideoTile();
+      setStatus("Background applied.");
+
+    } catch (err) {
+      console.error("Background error:", err);
+      setStatus("Background error: " + err.message);
+      bgModeSelect.value = "none";
+    }
+  });
 });
