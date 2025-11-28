@@ -35,6 +35,22 @@ body {
   display: grid;
   gap: 24px;
   grid-template-columns: 320px 1fr;
+  grid-template-rows: auto;
+}
+
+.join-card {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.roster-card {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.media-card {
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 .card {
