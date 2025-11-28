@@ -8,12 +8,12 @@
  */
 import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
 
-// Use CDN for WASM files (reliable) and ensure no auth headers are sent
+// Use local working WASM files with proper worker
 const ROOT = window.location.origin + window.location.pathname.replace(/index\.html$/, "");
 const FILTER_PATHS = {
-  worker: `https://static.sdkassets.chime.aws/bgblur/worker.js`,
-  wasm: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm.wasm`,
-  simd: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm-simd.wasm`,
+  worker: `${ROOT}background-filters/worker.js`,
+  wasm: `${ROOT}background-filters/segmentation.wasm`,
+  simd: `${ROOT}background-filters/segmentation-simd.wasm`,
 };
 
 const API_URL =
@@ -360,13 +360,34 @@ async function applyBackground(mode) {
       return;
     }
 
-    // Background filters are currently disabled due to WASM loading issues
-    // This is a known issue with Chime SDK v3.20.0 in some environments
-    setStatus("Background filters temporarily disabled - WASM loading issue");
-    console.warn("Background filters disabled due to WebAssembly compilation errors");
-    
-    // Fallback: continue without background processing
-    currentProcessor = null;
+    try {
+      if (mode === "blur") {
+        setStatus("Initializing background blur...");
+        currentProcessor =
+          await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(
+            { paths: FILTER_PATHS },
+            { blurStrength: 40 }
+          );
+      }
+
+      if (mode === "image") {
+        if (!selectedBackgroundImage) {
+          setStatus("Upload a background image.");
+          return;
+        }
+        
+        setStatus("Initializing background replacement...");
+        currentProcessor =
+          await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(
+            { paths: FILTER_PATHS },
+            { imageBlob: selectedBackgroundImage }
+          );
+      }
+    } catch (error) {
+      console.error("Background processor creation failed:", error);
+      setStatus(`Background error: ${error.message}`);
+      return;
+    }
 
     // If no processor (background filters disabled), just use regular camera
     if (currentProcessor) {
