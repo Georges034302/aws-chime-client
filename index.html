@@ -28,35 +28,37 @@
 
   <main class="layout">
 
-    <!-- Join Meeting -->
-    <section class="card join-card glass">
-      <h2>Join a Meeting</h2>
+    <div class="left-column">
+      <!-- Join Meeting -->
+      <section class="card join-card glass">
+        <h2>Join a Meeting</h2>
 
-      <label>Meeting ID
-        <input id="meetingId" type="text" placeholder="Enter meeting ID" />
-      </label>
+        <label>Meeting ID
+          <input id="meetingId" type="text" placeholder="Enter meeting ID" />
+        </label>
 
-      <label>Your Name
-        <input id="name" type="text" placeholder="Your display name" />
-      </label>
+        <label>Your Name
+          <input id="name" type="text" placeholder="Your display name" />
+        </label>
 
-      <label>Region
-        <select id="region">
-          <option value="ap-southeast-2">ap-southeast-2 🇦🇺</option>
-          <option value="us-east-1">us-east-1 🇺🇸</option>
-          <option value="us-west-2">us-west-2 🇺🇸</option>
-        </select>
-      </label>
+        <label>Region
+          <select id="region">
+            <option value="ap-southeast-2">ap-southeast-2 🇦🇺</option>
+            <option value="us-east-1">us-east-1 🇺🇸</option>
+            <option value="us-west-2">us-west-2 🇺🇸</option>
+          </select>
+        </label>
 
-      <button id="joinButton" class="btn primary">Join Meeting</button>
-      <p id="status" class="status-text"></p>
-    </section>
+        <button id="joinButton" class="btn primary">Join Meeting</button>
+        <p id="status" class="status-text"></p>
+      </section>
 
-    <!-- Participants List -->
-    <section class="card roster-card glass">
-      <h2>Participants</h2>
-      <ul id="rosterList" class="roster-list"></ul>
-    </section>
+      <!-- Participants List -->
+      <section class="card roster-card glass">
+        <h2>Participants</h2>
+        <ul id="rosterList" class="roster-list"></ul>
+      </section>
+    </div>
 
     <!-- Video Area -->
     <section class="card media-card glass">
