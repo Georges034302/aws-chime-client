@@ -484,9 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           blurStrength: 40
         };
-        currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(spec, {
-          logger: new ChimeSDK.ConsoleLogger('BackgroundFilter', ChimeSDK.LogLevel.INFO)
-        });
+        currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(spec);
       }
 
       if (mode === "image") {
@@ -504,9 +502,7 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           replacementImage: selectedBackgroundImage
         };
-        currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec, {
-          logger: new ChimeSDK.ConsoleLogger('BackgroundFilter', ChimeSDK.LogLevel.INFO)
-        });
+        currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec);
       }
 
       // Wrap processor in DefaultVideoTransformDevice
