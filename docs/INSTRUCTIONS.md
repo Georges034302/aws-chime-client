@@ -1,6 +1,6 @@
 # AWS Chime Client — Deployment & Configuration Instructions
 
-This guide explains how how to deploy the AWS backend (Lambda + API Gateway) using AWS SAM in **ap-southeast-2**, and how to configure the frontend (`app.js`) so the Chime app works end-to-end for any user.
+This guide explains how to deploy the AWS backend (Lambda + API Gateway + **Cognito Authentication**) using AWS SAM in **ap-southeast-2**, and how to configure the frontend for secure, authenticated access to Chime meetings.
 
 ---
 
@@ -171,9 +171,12 @@ SAM will output:
 
 ```
 ApiURL = https://xxxxx.execute-api.ap-southeast-2.amazonaws.com/prod/join
+CognitoUserPoolId = ap-southeast-2_xxxxxxxxx
+CognitoUserPoolClientId = xxxxxxxxxxxxxxxxxxxx
+CognitoHostedUIDomain = https://chime-client-xxxxx.auth.ap-southeast-2.amazoncognito.com/login...
 ```
 
-Copy this URL - you'll need it for the frontend configuration.
+Copy these values - you'll need them for the frontend configuration and user creation.
 
 ### Verify Deployment
 
@@ -204,15 +207,39 @@ Expected response:
 
 ---
 
-## 6. Configure the Frontend (`app.js`)
+## 6. Configure the Frontend Authentication
 
-Open `app.js` and update the API_URL:
+### Update API URL in `app.js`:
 
 ```javascript
 const API_URL = "https://xxxxx.execute-api.ap-southeast-2.amazonaws.com/prod/join";
 ```
 
-Replace `xxxxx` with your actual API Gateway ID from the deployment output.
+### Update Cognito Configuration in `index.html`:
+
+```javascript
+const COGNITO_DOMAIN = "chime-client-xxxxx-xxxxx";          
+const CLIENT_ID = "xxxxxxxxxxxxxxxxxxxx";                 
+```
+
+Replace these values with your actual deployment outputs from step 5.
+
+### Create Test Users in Cognito:
+
+```bash
+aws cognito-idp admin-create-user \
+  --user-pool-id ap-southeast-2_xxxxxxxxx \
+  --username your-username \
+  --user-attributes Name=email,Value=your-email@example.com Name=email_verified,Value=true \
+  --temporary-password TempPass123! \
+  --message-action SUPPRESS
+
+aws cognito-idp admin-set-user-password \
+  --user-pool-id ap-southeast-2_xxxxxxxxx \
+  --username your-username \
+  --password "YourSecurePassword123!" \
+  --permanent
+```
 
 Commit and push:
 
@@ -246,20 +273,33 @@ https://<username>.github.io/aws-chime-client/
 
 Open the GitHub Pages URL.
 
-Enter:
+### Authentication Flow:
 
+1. Click **Login** button
+2. Redirected to Cognito hosted UI
+3. Enter your username and password
+4. Redirected back with JWT token
+5. Meeting section becomes available
+
+### Meeting Flow:
+
+Enter:
 - Any meeting ID  
 - Display name  
 - Click **Join Meeting**
 
 Expected flow:
 
-- Frontend sends POST → API Gateway  
+- Frontend sends POST → API Gateway (with JWT token)
+- API Gateway validates Cognito token  
 - API Gateway triggers Lambda  
 - Lambda creates a Chime Meeting + Attendee  
 - Credentials return to browser  
 - Browser joins the Chime meeting  
-- Local & remote video appear  
+- Local & remote video appear
+
+### Logout:
+- Click **Logout** button to clear authentication  
 
 ---
 
@@ -380,6 +420,24 @@ sam deploy
 2. Close other tabs/applications to free CPU
 3. Reduce video resolution if possible
 4. Background filters require significant CPU - low-end devices may struggle
+
+---
+
+## Monthly AWS Cost Estimate (1 User)
+
+| AWS Service        | Purpose                        | Estimated Usage (1 User) | Estimated Monthly Cost |
+|-------------------|--------------------------------|---------------------------|--------------------------|
+| Amazon Chime SDK  | Audio/Video meetings           | 1–5 meetings/month        | **$0.00** *(Free tier covers usage)* |
+| Amazon Cognito    | User authentication (Hosted UI) | 1 MAU                     | **$0.00** *(50,000 MAU free)* |
+| AWS Lambda        | Backend create/join function   | ~100 requests             | **$0.00** *(1M free)* |
+| API Gateway       | Secure API endpoint            | ~100 calls                | **$0.00** *(1M free)* |
+| CloudWatch Logs   | Lambda logging                 | Few KB                    | **$0.00** *(5GB free)* |
+| S3 (optional)     | Static assets / CSS overrides  | <50 MB                    | **$0.01** |
+| Route53 (optional)| Custom domain                  | 1 domain                  | **$0.50** |
+| GitHub Pages      | Hosting frontend               | Unlimited                 | **Free** |
+
+### **Total Monthly Estimate: $0.00 – $1.00**
+*(Depending on whether you use a custom domain)*
 
 ---
 ## End of Instructions

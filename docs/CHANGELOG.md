@@ -81,7 +81,20 @@
 - 🔧 Resolved WASM loading in production environment
 - ⚠️ Note: Background filters don't work in GitHub Codespaces (use GitHub Pages or local HTTPS)
 
-## v4.0.0 — Planned
+## v4.0.0 — 🔐 COGNITO AUTHENTICATION (November 28, 2025)
+**ENTERPRISE-READY AUTHENTICATION** - Production deployment with AWS Cognito
+- ✅ **AWS Cognito User Pool** - Secure user authentication with hosted UI
+- ✅ **JWT token authorization** - API Gateway Cognito authorizer integration
+- ✅ **Login/logout flow** - Professional authentication experience
+- ✅ **Auth guards** - Meeting access requires authentication
+- ✅ **Production deployment** - Full AWS infrastructure with SAM CloudFormation
+- ✅ **Cross-platform support** - Works on localhost and GitHub Pages
+- 🔧 Updated SAM template with Cognito User Pool, App Client, and Domain
+- 🔧 Enhanced frontend with authentication UI and token handling
+- 🔧 API Gateway configured with Cognito authorizer for secure endpoints
+- 🔧 Fetch interceptor automatically attaches JWT tokens to API calls
+
+## v5.0.0 — Planned
 - Background image presets gallery
 - Connection quality indicators
 - Recording capabilities

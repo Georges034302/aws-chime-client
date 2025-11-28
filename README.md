@@ -4,9 +4,9 @@
 
 
 ## 🌐 Overview
-A lightweight, browser‑based **Amazon Chime SDK v3** client with advanced video features including background blur, virtual backgrounds, screen sharing, and real-time participant roster.
+A secure, enterprise-ready **Amazon Chime SDK v3** client with **AWS Cognito authentication** and advanced video features including background blur, virtual backgrounds, screen sharing, and real-time participant roster.
 
-**No installation required** — works directly in your browser and interoperates seamlessly with official Amazon Chime participants.
+**Production-ready security** — requires authentication via AWS Cognito before accessing meetings. Works directly in your browser and interoperates seamlessly with official Amazon Chime participants.
 
 Built with modern web standards:
 - **Frontend**: Amazon Chime SDK JavaScript v3.20.0 (via esm.sh CDN)
@@ -27,6 +27,12 @@ All media flows through Amazon Chime's WebRTC infrastructure — the backend onl
 
 ## 🚀 Key Features
 
+### 🔐 Security & Authentication
+- **AWS Cognito authentication** with hosted UI
+- **JWT token-based authorization** for API access
+- **Enterprise-ready security** with user pool management
+- **Cross-platform login** (localhost + GitHub Pages)
+
 ### Video & Audio
 - **Background blur** with configurable strength
 - **Custom virtual backgrounds** via image upload
@@ -45,7 +51,7 @@ All media flows through Amazon Chime's WebRTC infrastructure — the backend onl
 - Clean code architecture with helper functions
 - Zero installation — runs entirely in browser
 - Runtime WASM loading for background filters
-- Free hosting via GitHub Pages
+- AWS infrastructure deployment via SAM
 
 ---
 
@@ -129,13 +135,16 @@ aws-chime-client/
 ## 🎮 Quick Start
 
 1. **Open the app**: Visit [GitHub Pages deployment](https://georges034302.github.io/aws-chime-client/)
-2. **Enter meeting details**: Meeting ID, your name, and AWS region
-3. **Join meeting**: Click "Join Meeting" to connect
-4. **Enable video**: Click camera button to start video
-5. **Choose background**: Select None/Blur/Image from dropdown
-6. **Upload custom image**: Click "Upload Image" for virtual backgrounds
-7. **Share screen**: Click screen share button (🖥️)
-8. **View participants**: See real-time roster with mute status
+2. **Login**: Click "Login" button to authenticate via AWS Cognito
+3. **Complete authentication**: Use Cognito hosted UI to sign in
+4. **Enter meeting details**: Meeting ID, your name, and AWS region
+5. **Join meeting**: Click "Join Meeting" to connect (requires authentication)
+6. **Enable video**: Click camera button to start video
+7. **Choose background**: Select None/Blur/Image from dropdown
+8. **Upload custom image**: Click "Upload Image" for virtual backgrounds
+9. **Share screen**: Click screen share button (🖥️)
+10. **View participants**: See real-time roster with mute status
+11. **Logout**: Click "Logout" when finished
 
 ### Camera/Mic Controls
 - Select devices from dropdown menus
