@@ -9,7 +9,6 @@ let audioVideo = null;
 let isVideoOn = false;
 let isAudioOn = true;
 let currentProcessor = null;
-let selectedBackgroundImage = null;
 
 const statusEl = document.getElementById("status");
 const joinButton = document.getElementById("joinButton");
@@ -237,7 +236,6 @@ async function leaveMeeting() {
   toggleVideoButton.textContent = "Start Video";
   toggleAudioButton.textContent = "Mute";
   bgModeSelect.value = "none";
-  selectedBackgroundImage = null;
   
   // Clear video elements
   document.getElementById("video-preview").innerHTML = "";
@@ -283,18 +281,8 @@ micSelect.addEventListener("change", async () => {
 document.getElementById("bgImage").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
-    console.log("Background image file selected:", file.name);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      selectedBackgroundImage = event.target.result;
-      console.log("Background image loaded, data URL length:", selectedBackgroundImage.length);
-      setStatus("✓ Background image loaded. Select 'Image' mode to apply.");
-    };
-    reader.onerror = (error) => {
-      console.error("Error reading image file:", error);
-      setStatus("Error loading image file.");
-    };
-    reader.readAsDataURL(file);
+    console.log("Background image file selected:", file.name, "(", (file.size / 1024).toFixed(1), "KB)");
+    setStatus("✓ Background image selected. Choose 'Image' mode to apply.");
   } else {
     console.log("No file selected");
   }
@@ -327,50 +315,68 @@ bgModeSelect.addEventListener("change", async () => {
         throw new Error("Background blur not available. Check SDK loading.");
       }
       
+      setStatus("Loading background blur…");
+      
       currentProcessor = await BackgroundBlurVideoFrameProcessor.create();
       await audioVideo.stopVideoInput();
       
       // Create transform device with blur processor
-      const transformDevice = await currentProcessor.createTransformDevice(deviceId);
+      const transformDevice = new ChimeSDK.DefaultVideoTransformDevice(
+        meetingSession.deviceController,
+        deviceId,
+        [currentProcessor]
+      );
+      
       await audioVideo.startVideoInput(transformDevice);
       
       setStatus("Background blur applied");
       
     } else if (mode === "image") {
-      if (!selectedBackgroundImage) {
+      const fileInput = document.getElementById("bgImage");
+      const file = fileInput.files[0];
+
+      if (!file) {
         setStatus("Please upload a background image first.");
         bgModeSelect.value = "none";
         return;
       }
-      
-      // Create background replacement processor
-      const { BackgroundReplacementVideoFrameProcessor } = window;
-      if (!BackgroundReplacementVideoFrameProcessor) {
-        throw new Error("Background replacement not available. Check SDK loading.");
+
+      setStatus("Loading background image…");
+
+      // Convert uploaded file → ImageBitmap (required type)
+      let imageBitmap;
+      try {
+        imageBitmap = await createImageBitmap(file);
+        console.log("ImageBitmap created:", imageBitmap.width, "x", imageBitmap.height);
+      } catch (err) {
+        console.error("Failed to create ImageBitmap:", err);
+        setStatus("Error: Unable to load background image");
+        bgModeSelect.value = "none";
+        return;
       }
-      
-      // Load background image as HTMLImageElement
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      
-      // Wait for image to load
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = selectedBackgroundImage;
+
+      // Chime v3 requires WASM + Worker paths when using browser ESM
+      const workerURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/backgroundfilter/worker.js";
+      const wasmURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/backgroundfilter/_cwt-wasm.wasm";
+
+      // Build the processor correctly
+      currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create({
+        paths: {
+          worker: workerURL,
+          wasm: wasmURL,
+        },
+        replacementImage: imageBitmap,
       });
-      
-      console.log("Image loaded:", img.width, "x", img.height);
-      
-      // Create processor with image element
-      currentProcessor = await BackgroundReplacementVideoFrameProcessor.create(null, {
-        imageBlob: img
-      });
-      
+
       await audioVideo.stopVideoInput();
-      
-      // Create transform device with replacement processor
-      const transformDevice = await currentProcessor.createTransformDevice(deviceId);
+
+      // Build transform device with the processor
+      const transformDevice = new ChimeSDK.DefaultVideoTransformDevice(
+        meetingSession.deviceController,
+        deviceId,
+        [currentProcessor]
+      );
+
       await audioVideo.startVideoInput(transformDevice);
       
       setStatus("Background image applied");

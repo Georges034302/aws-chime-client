@@ -497,8 +497,12 @@ const blurProcessor = await BackgroundBlurVideoFrameProcessor.create();
 // Stop current video input
 await audioVideo.stopVideoInput();
 
-// Create transform device with blur
-const transformDevice = await blurProcessor.createTransformDevice(deviceId);
+// Create transform device with blur using DefaultVideoTransformDevice
+const transformDevice = new ChimeSDK.DefaultVideoTransformDevice(
+  meetingSession.deviceController,
+  deviceId,
+  [blurProcessor]
+);
 
 // Start video with blur applied
 await audioVideo.startVideoInput(transformDevice);
@@ -507,49 +511,57 @@ audioVideo.startLocalVideoTile();
 
 **Background Replacement (app.js):**
 ```javascript
-// Background image upload handler
+// Background image upload handler - just stores file reference
 document.getElementById("bgImage").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
     console.log("Background image file selected:", file.name);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      selectedBackgroundImage = event.target.result;
-      console.log("Background image loaded, data URL length:", selectedBackgroundImage.length);
-      setStatus("✓ Background image loaded. Select 'Image' mode to apply.");
-    };
-    reader.onerror = (error) => {
-      console.error("Error reading image file:", error);
-      setStatus("Error loading image file.");
-    };
-    reader.readAsDataURL(file);
+    setStatus("✓ Background image selected. Choose 'Image' mode to apply.");
   }
 });
 
-// When "Image" mode is selected
-// Load background image as HTMLImageElement
-const img = new Image();
-img.crossOrigin = "anonymous";
+// When "Image" mode is selected - convert file to ImageBitmap
+const fileInput = document.getElementById("bgImage");
+const file = fileInput.files[0];
 
-// Wait for image to load
-await new Promise((resolve, reject) => {
-  img.onload = resolve;
-  img.onerror = reject;
-  img.src = selectedBackgroundImage; // data URL from file upload
-});
+if (!file) {
+  setStatus("Please upload a background image first.");
+  return;
+}
 
-console.log("Image loaded:", img.width, "x", img.height);
+// Convert uploaded file → ImageBitmap (required by Chime SDK v3)
+let imageBitmap;
+try {
+  imageBitmap = await createImageBitmap(file);
+  console.log("ImageBitmap created:", imageBitmap.width, "x", imageBitmap.height);
+} catch (err) {
+  console.error("Failed to create ImageBitmap:", err);
+  setStatus("Error: Unable to load background image");
+  return;
+}
 
-// Create replacement processor with image element
-const replaceProcessor = await BackgroundReplacementVideoFrameProcessor.create(null, {
-  imageBlob: img
+// Specify WASM and worker paths for ESM loading
+const workerURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/backgroundfilter/worker.js";
+const wasmURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/backgroundfilter/_cwt-wasm.wasm";
+
+// Create replacement processor with ImageBitmap
+const replaceProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create({
+  paths: {
+    worker: workerURL,
+    wasm: wasmURL,
+  },
+  replacementImage: imageBitmap,
 });
 
 // Stop current video input
 await audioVideo.stopVideoInput();
 
-// Create transform device with replacement
-const transformDevice = await replaceProcessor.createTransformDevice(deviceId);
+// Create transform device with processor
+const transformDevice = new ChimeSDK.DefaultVideoTransformDevice(
+  meetingSession.deviceController,
+  deviceId,
+  [replaceProcessor]
+);
 
 // Start video with background image
 await audioVideo.startVideoInput(transformDevice);
@@ -578,18 +590,18 @@ These are automatically downloaded from AWS CDN at runtime by the SDK. No local 
 
 1. Join meeting and start video
 2. **Upload background image**: Click "Background Image" file input and select an image
-   - Console will log: "Background image file selected: [filename]"
-   - Status will show: "✓ Background image loaded. Select 'Image' mode to apply."
+   - Console will log: "Background image file selected: [filename] ([size] KB)"
+   - Status will show: "✓ Background image selected. Choose 'Image' mode to apply."
 3. Select "Blur" from Background Mode dropdown → blur applies immediately
-4. Select "Image" from dropdown → custom background applies (requires image upload first)
+4. Select "Image" from dropdown → converts file to ImageBitmap and applies custom background
 5. Select "None" to remove effects
 6. Switch cameras while background effect is preserved
 
-**Debugging Image Upload:**
-- Open browser console (F12 → Console)
-- Upload an image and verify console logs appear
-- If no logs appear, check file input element exists with `id="bgImage"`
-- Check for FileReader errors in console
+**Key Requirements:**
+- Background replacement requires **ImageBitmap** (created via `createImageBitmap(file)`)
+- Both blur and replacement use **DefaultVideoTransformDevice** for processor wrapping
+- WASM/worker paths must be specified when using ESM module loading
+- Image file is read directly from file input, no need to store data URL
 
 ---
 
