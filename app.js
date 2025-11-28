@@ -1,25 +1,23 @@
-// Use ChimeSDK from window (loaded via CDN in index.html)
-
 /**
- * AWS Chime Client – FIXED VERSION
- * - No mixed SDK versions
- * - Correct logging
- * - Correct WASM paths
- * - Stable background blur + replacement
- * - Stable roster + video tiles
+ * AWS Chime Client v3.0 - Enhanced with Cognito Authentication
+ * - Background filters working (blur + image replacement)
+ * - Cognito auth guard for backend calls
+ * - Graceful 401 error handling
+ * - All existing functionality preserved
+ * - ESM module architecture
  */
 import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
 
 // Use ChimeSDK's official CDN for WASM files, local worker
 const ROOT = window.location.origin + window.location.pathname.replace(/index\.html$/, "");
 const FILTER_PATHS = {
-  worker: `${ROOT}background-filters/worker.js`,
+  worker: `https://static.sdkassets.chime.aws/bgblur/worker.js`,
   wasm: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm.wasm`,
   simd: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm-simd.wasm`,
 };
 
 const API_URL =
-  "https://ytzz5sx9r1.execute-api.ap-southeast-2.amazonaws.com/prod/join";
+  "https://jo2o2rgg5l.execute-api.ap-southeast-2.amazonaws.com/prod/join";
 
 let meetingSession = null;
 let audioVideo = null;
@@ -74,18 +72,29 @@ function updateRosterUI() {
 }
 
 // --------------------------------------------------------------------------
-// Backend: Create/Join Meeting
+// Backend: Create/Join Meeting (with Cognito Auth Guard)
 // --------------------------------------------------------------------------
 async function fetchMeeting(meetingId, name, region) {
+  if (!window.idToken) {
+    throw new Error("Not authenticated. Please log in first.");
+  }
+
   const payload = { meetingId, name, region };
 
   const res = await fetch(API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" }, // Authorization added automatically by fetch interceptor
     body: JSON.stringify(payload),
   });
 
-  if (!res.ok) throw new Error("Backend error: " + res.status);
+  if (res.status === 401) {
+    throw new Error("Unauthorized. Please log in again.");
+  }
+
+  if (!res.ok) {
+    const msg = await res.text();
+    throw new Error(`Backend error: ${msg}`);
+  }
 
   return await res.json();
 }
@@ -95,6 +104,11 @@ async function fetchMeeting(meetingId, name, region) {
 // --------------------------------------------------------------------------
 async function joinMeeting() {
   try {
+    if (!window.idToken) {
+      setStatus("Please log in with Cognito first.");
+      return;
+    }
+
     const meetingId = document.getElementById("meetingId").value.trim();
     const name = document.getElementById("name").value.trim();
     const region = document.getElementById("region").value;

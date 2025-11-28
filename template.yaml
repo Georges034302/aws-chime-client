@@ -19,6 +19,13 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: prod
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt CognitoUserPool.Arn
+            Identity:
+              Header: Authorization
       Cors:
         AllowMethods: "'POST,OPTIONS'"
         AllowHeaders: "'Content-Type'"
@@ -46,7 +53,61 @@ Resources:
             Method: POST
             RestApiId: !Ref ApiGatewayRestApi
 
+  ###########################################################
+  # COGNITO USER POOL (Manual Login)
+  ###########################################################
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: ChimeClientUsers
+      AutoVerifiedAttributes:
+        - email
+
+  ###########################################################
+  # COGNITO APP CLIENT (NO SECRET, Manual Login)
+  ###########################################################
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      ClientName: ChimeClientApp
+      GenerateSecret: false
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      CallbackURLs:
+        - http://localhost:8000/
+        - https://georges034302.github.io/aws-chime-client/
+      LogoutURLs:
+        - http://localhost:8000/
+        - https://georges034302.github.io/aws-chime-client/
+
+  ###########################################################
+  # COGNITO HOSTED UI DOMAIN
+  ###########################################################
+  CognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      Domain: "chime-client-1764319994-19362"
+
 Outputs:
   ApiURL:
     Description: "Invoke URL for Join Meeting"
     Value: !Sub "https://${ApiGatewayRestApi}.execute-api.ap-southeast-2.amazonaws.com/prod/join"
+  
+  CognitoUserPoolId:
+    Description: "Cognito User Pool ID"
+    Value: !Ref CognitoUserPool
+
+  CognitoUserPoolClientId:
+    Description: "App Client ID"
+    Value: !Ref CognitoUserPoolClient
+
+  CognitoHostedUIDomain:
+    Description: "Cognito Hosted UI Login URL"
+    Value: !Sub "https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${CognitoUserPoolClient}&response_type=token&redirect_uri=http://localhost:8000/"
