@@ -1,4 +1,4 @@
-# [<img src="https://github.com/user-attachments/assets/9db7a38b-5df2-4696-b584-ab37c5b8ba3d" width="40" /> AWS Chime Client](https://georges034302.github.io/aws-chime-client/)
+# [<img src="https://github.com/user-attachments/assets/9db7a38b-5df2-4696-b584-ab37c5b8ba3d" width="40" /> AWS Chime Client v4.0](https://georges034302.github.io/aws-chime-client/)
 
 
 
@@ -103,31 +103,33 @@ All media flows through Amazon Chime's WebRTC infrastructure — the backend onl
 ## 📁 Repository Structure
 
 ```
-aws-chime-client/
-├── app.js                     ← Frontend logic (SDK v3)
-├── index.html                 ← HTML structure
-├── style.css                  ← Styling
-├── background-filters/        ← WASM files for background filters
-│   ├── worker.js              ← Web Worker for processing
-│   ├── segmentation.wasm      ← Segmentation model
-│   └── segmentation-simd.wasm ← SIMD-optimized model
-├── backend/
-│   ├── createMeeting.js       ← Lambda handler
-│   └── package.json           ← Backend dependencies
-├── template.yaml              ← SAM CloudFormation template
-├── samconfig.toml             ← SAM CLI configuration
-├── docs/
-│   ├── INSTRUCTIONS.md        ← Deployment guide
-│   ├── CHANGELOG.md           ← Version history
-│   ├── ROADMAP.md             ← Feature roadmap
-│   └── CONTRIBUTING.md        ← Contribution guidelines
-├── img/                       ← Assets (logos, diagrams)
-├── cleanup.sh                 ← Cleanup script
-├── libs/                      ← (reserved for future use)
-├── node_modules/              ← Dependencies
-├── package.json
-├── package-lock.json
-└── LICENSE
+.
+├── LICENSE
+├── README.md
+├── app.js                    # Main Chime SDK application logic
+├── backend/                  # AWS Lambda backend
+│   ├── createMeeting.js     # Meeting creation with Cognito auth
+│   └── package.json
+├── background-filters/       # WebAssembly background processing
+│   ├── segmentation-simd.wasm
+│   ├── segmentation.wasm
+│   └── worker.js
+├── docs/                     # Documentation
+│   ├── CHANGELOG.md
+│   ├── CONTRIBUTING.md
+│   ├── INSTRUCTIONS.md
+│   ├── ROADMAP.md
+│   └── index.md
+├── img/                      # Assets and diagrams
+│   ├── aws_architecture.png
+│   └── logo_dark.png
+├── index.html               # Main application with Cognito integration
+├── scripts/                 # Deployment and utility scripts
+│   ├── cleanup.sh
+│   ├── deploy-cognito-fix.sh
+│   └── verify-cognito.sh
+├── style.css                # Modern dark theme styling
+└── template.yaml            # CloudFormation infrastructure
 ```
 
 ---
@@ -156,11 +158,26 @@ aws-chime-client/
 
 ## 🛠 Deployment
 
+### Quick Deploy (v4.0)
+```bash
+# Deploy complete stack with Cognito authentication
+./scripts/deploy-cognito-fix.sh
+
+# Verify Cognito configuration
+./scripts/verify-cognito.sh
+
+# Start local development server
+python3 -m http.server 8000
+```
+
+### Detailed Setup
 See [`docs/INSTRUCTIONS.md`](docs/INSTRUCTIONS.md) for complete deployment guide including:
 - AWS CLI and SAM CLI setup
+- Cognito User Pool configuration
 - Backend deployment to AWS
 - Frontend configuration
 - GitHub Pages hosting
+- Multi-environment support
 
 ---
 

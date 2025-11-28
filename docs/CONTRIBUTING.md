@@ -1,6 +1,6 @@
-# Contributing Guide
+# Contributing Guide - AWS Chime Client v4.0
 
-Thank you for considering contributing to **AWS Chime Client**!  
+Thank you for considering contributing to **AWS Chime Client v4.0**!  
 We welcome improvements, ideas, bug reports, and feature suggestions.
 
 ## How to Contribute

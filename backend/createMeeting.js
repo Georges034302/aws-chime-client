@@ -4,13 +4,26 @@
 const { ChimeSDKMeetingsClient, CreateMeetingCommand, CreateAttendeeCommand } = require("@aws-sdk/client-chime-sdk-meetings");
 
 exports.handler = async (event) => {
+  // Handle CORS preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization",
+        "Access-Control-Allow-Methods": "POST,OPTIONS",
+      },
+      body: '',
+    };
+  }
+
   try {
     const body = event.body ? JSON.parse(event.body) : {};
     const meetingId = body.meetingId || `demo-${Date.now()}`;
     const name = body.name || "Guest";
     const region = body.region || "us-east-1";
 
-    const client = new ChimeSDKMeetingsClient({ region: "us-east-1" });
+    const client = new ChimeSDKMeetingsClient({ region: process.env.CHIME_REGION || region });
     const requestToken = `${meetingId}-${Date.now()}`;
 
     // Create meeting
@@ -34,7 +47,8 @@ exports.handler = async (event) => {
       statusCode: 200,
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization",
+        "Access-Control-Allow-Methods": "POST,OPTIONS",
       },
       body: JSON.stringify({
         meeting: meetingResponse.Meeting,
@@ -47,6 +61,8 @@ exports.handler = async (event) => {
       statusCode: 500,
       headers: {
         "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization",
+        "Access-Control-Allow-Methods": "POST,OPTIONS",
       },
       body: JSON.stringify({ error: err.message }),
     };

@@ -28,7 +28,7 @@ Resources:
               Header: Authorization
       Cors:
         AllowMethods: "'POST,OPTIONS'"
-        AllowHeaders: "'Content-Type'"
+        AllowHeaders: "'Content-Type,Authorization'"
         AllowOrigin: "'*'"
 
   CreateMeetingFunction:
@@ -52,6 +52,14 @@ Resources:
             Path: /join
             Method: POST
             RestApiId: !Ref ApiGatewayRestApi
+        JoinMeetingApiOptions:
+          Type: Api
+          Properties:
+            Path: /join
+            Method: OPTIONS
+            RestApiId: !Ref ApiGatewayRestApi
+            Auth:
+              Authorizer: NONE
 
   ###########################################################
   # COGNITO USER POOL (Manual Login)
