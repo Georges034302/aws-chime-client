@@ -12,6 +12,7 @@ const API_URL = "https://ytzz5sx9r1.execute-api.ap-southeast-2.amazonaws.com/pro
 
 let meetingSession = null;
 let audioVideo = null;
+let logger = null;
 
 let isVideoOn = false;
 let isAudioOn = true;
@@ -91,7 +92,7 @@ async function joinMeeting() {
 
     const { meeting, attendee } = await fetchMeeting(meetingId, name, region);
 
-    const logger = new ChimeSDK.ConsoleLogger(
+    logger = new ChimeSDK.ConsoleLogger(
       "ChimeClient",
       ChimeSDK.LogLevel.INFO
     );
@@ -470,14 +471,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Create a simple logger for the background processors
-      const logger = {
-        info: (...args) => console.log(...args),
-        debug: (...args) => console.debug(...args),
-        warn: (...args) => console.warn(...args),
-        error: (...args) => console.error(...args)
-      };
-
       if (mode === "blur") {
         const spec = {
           paths: {
@@ -486,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
             simd: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation-simd.wasm'
           },
           blurStrength: 40,
-          logger: logger
+          logger
         };
         currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(spec);
       }
@@ -505,7 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
             simd: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation-simd.wasm'
           },
           imageBlob: selectedBackgroundImage,
-          logger: logger
+          logger
         };
         currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec);
       }
