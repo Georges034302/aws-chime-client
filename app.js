@@ -10,12 +10,12 @@
  */
 import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
 
-// Proper path construction for background filters
+// Use ChimeSDK's official CDN for WASM files, local worker
 const ROOT = window.location.origin + window.location.pathname.replace(/index\.html$/, "");
 const FILTER_PATHS = {
   worker: `${ROOT}background-filters/worker.js`,
-  wasm: `${ROOT}background-filters/segmentation.wasm`,
-  simd: `${ROOT}background-filters/segmentation-simd.wasm`,
+  wasm: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm.wasm`,
+  simd: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm-simd.wasm`,
 };
 
 const API_URL =
