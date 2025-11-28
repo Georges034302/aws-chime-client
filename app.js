@@ -492,7 +492,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      const transformDevice = await currentProcessor.createTransformDevice(deviceId);
+      // Wrap processor in DefaultVideoTransformDevice
+      const transformDevice = new ChimeSDK.DefaultVideoTransformDevice(
+        meetingSession.deviceController,
+        deviceId,
+        [currentProcessor]
+      );
 
       await audioVideo.stopVideoInput();
       await audioVideo.startVideoInput(transformDevice);
