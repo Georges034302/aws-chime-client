@@ -470,12 +470,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Build absolute URL paths for WASM files
+      const root = window.location.origin + window.location.pathname.replace('index.html', '');
+
       if (mode === "blur") {
         const spec = {
           paths: {
-            worker: 'https://georges034302.github.io/aws-chime-client/public/background-filters/worker.js',
-            wasm: 'https://georges034302.github.io/aws-chime-client/public/background-filters/segmentation.wasm',
-            simd: 'https://georges034302.github.io/aws-chime-client/public/background-filters/segmentation-simd.wasm'
+            worker: `${root}background-filters/worker.js`,
+            wasm: `${root}background-filters/segmentation.wasm`,
+            simd: `${root}background-filters/segmentation-simd.wasm`
           },
           blurStrength: 40
         };
@@ -491,9 +494,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spec = {
           paths: {
-            worker: 'https://georges034302.github.io/aws-chime-client/public/background-filters/worker.js',
-            wasm: 'https://georges034302.github.io/aws-chime-client/public/background-filters/segmentation.wasm',
-            simd: 'https://georges034302.github.io/aws-chime-client/public/background-filters/segmentation-simd.wasm'
+            worker: `${root}background-filters/worker.js`,
+            wasm: `${root}background-filters/segmentation.wasm`,
+            simd: `${root}background-filters/segmentation-simd.wasm`
           },
           imageBlob: selectedBackgroundImage
         };

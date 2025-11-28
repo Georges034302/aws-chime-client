@@ -15,11 +15,10 @@ aws-chime-client/
 ├── app.js                     ← Frontend JavaScript (SDK v3 + Background Filters)
 ├── index.html                 ← Frontend HTML (loads SDK v3 + background filters)
 ├── style.css                  ← Frontend CSS
-├── public/
-│   └── background-filters/    ← WASM files for background filters
-│       ├── worker.js          ← Web Worker for processing
-│       ├── segmentation.wasm  ← Segmentation model
-│       └── segmentation-simd.wasm  ← SIMD-optimized model
+├── background-filters/
+│   ├── worker.js              ← Web Worker for processing
+│   ├── segmentation.wasm      ← Segmentation model
+│   └── segmentation-simd.wasm ← SIMD-optimized model
 ├── backend/
 │   ├── createMeeting.js       ← Lambda handler (AWS SDK v3)
 │   └── package.json           ← Backend dependencies
@@ -31,9 +30,14 @@ aws-chime-client/
 │   ├── ROADMAP.md             ← Feature roadmap
 │   ├── CONTRIBUTING.md        ← Contribution guidelines
 │   └── index.md
-└── img/
-    ├── aws_architecture.png   ← Architecture diagram
-    └── logo_dark.png          ← Logo
+├── img/
+│   ├── aws_architecture.png   ← Architecture diagram
+│   └── logo_dark.png          ← Logo
+├── cleanup.sh                 ← Cleanup script
+├── libs/                      ← (reserved for future use)
+├── node_modules/              ← Dependencies
+├── package.json
+├── package-lock.json
 ```
 
 **Key Files:**
@@ -378,7 +382,6 @@ sam deploy
 4. Background filters require significant CPU - low-end devices may struggle
 
 ---
-
 ## End of Instructions
 
 This file can be used by *any user* to deploy and configure the project.

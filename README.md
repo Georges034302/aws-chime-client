@@ -99,11 +99,10 @@ aws-chime-client/
 ├── app.js                     ← Frontend logic (SDK v3)
 ├── index.html                 ← HTML structure
 ├── style.css                  ← Styling
-├── public/
-│   └── background-filters/    ← WASM files for background filters
-│       ├── worker.js          ← Web Worker for processing
-│       ├── segmentation.wasm  ← Segmentation model
-│       └── segmentation-simd.wasm  ← SIMD-optimized model
+├── background-filters/        ← WASM files for background filters
+│   ├── worker.js              ← Web Worker for processing
+│   ├── segmentation.wasm      ← Segmentation model
+│   └── segmentation-simd.wasm ← SIMD-optimized model
 ├── backend/
 │   ├── createMeeting.js       ← Lambda handler
 │   └── package.json           ← Backend dependencies
@@ -114,7 +113,13 @@ aws-chime-client/
 │   ├── CHANGELOG.md           ← Version history
 │   ├── ROADMAP.md             ← Feature roadmap
 │   └── CONTRIBUTING.md        ← Contribution guidelines
-└── img/                       ← Assets (logos, diagrams)
+├── img/                       ← Assets (logos, diagrams)
+├── cleanup.sh                 ← Cleanup script
+├── libs/                      ← (reserved for future use)
+├── node_modules/              ← Dependencies
+├── package.json
+├── package-lock.json
+└── LICENSE
 ```
 
 ---
