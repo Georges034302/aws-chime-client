@@ -1,10 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Test</title>
+  <meta charset="UTF-8">
+  <title>AWS Chime Client v4.0</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Step-by-step test</h1>
-<button onclick="alert('Button works!')">Test Button</button>
+  <h1>AWS Chime Client v4.0</h1>
+  
+  <div id="auth-section">
+    <div id="auth-status">Not logged in</div>
+    <button id="loginButton">Login</button>
+    <button id="logoutButton" style="display:none;">Logout</button>
+  </div>
+
+  <hr>
+
+  <div id="meeting-section" style="display:none;">
+    <div><label>Meeting ID:</label><input id="meetingId"></div>
+    <div><label>Your Name:</label><input id="name"></div>
+    <button id="joinButton">Join Meeting</button>
+    <div id="status">Status: Ready</div>
+  </div>
+
+  <script>
+    try {
+      // Cognito config
+      const DOMAIN = "chime-client-1764319994-19362";
+      const CLIENT_ID = "771598hr3p7fm4j9990585r63f";
+      const REDIRECT_URI = "https://georges034302.github.io/aws-chime-client/";
+      
+      let idToken = null;
+
+      function login() {
+        const url = "https://" + DOMAIN + ".auth.ap-southeast-2.amazoncognito.com/login?" +
+          "client_id=" + CLIENT_ID + 
+          "&response_type=token" +
+          "&scope=openid+profile+email" + 
+          "&redirect_uri=" + encodeURIComponent(REDIRECT_URI);
+        window.location.href = url;
+      }
+
+      function logout() {
+        const url = "https://" + DOMAIN + ".auth.ap-southeast-2.amazoncognito.com/logout?" +
+          "client_id=" + CLIENT_ID +
+          "&logout_uri=" + encodeURIComponent(REDIRECT_URI);
+        window.location.href = url;
+      }
+
+      function parseToken() {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+          const params = new URLSearchParams(hash);
+          idToken = params.get("id_token");
+          if (idToken) {
+            document.getElementById("auth-status").textContent = "Logged in ✓";
+            document.getElementById("loginButton").style.display = "none";
+            document.getElementById("logoutButton").style.display = "inline";
+            document.getElementById("meeting-section").style.display = "block";
+            window.location.hash = "";
+          }
+        }
+      }
+
+      // Initialize
+      document.addEventListener("DOMContentLoaded", function() {
+        parseToken();
+        document.getElementById("loginButton").onclick = login;
+        document.getElementById("logoutButton").onclick = logout;
+      });
+
+    } catch (error) {
+      console.error("Script error:", error);
+      document.body.innerHTML = "<h1>Error: " + error.message + "</h1>";
+    }
+  </script>
 </body>
 </html>
