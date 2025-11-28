@@ -1,7 +1,5 @@
 /**
- * Basic AWS Chime Client front-end wiring.
- * This is a starter template; you must set API_URL to your API Gateway endpoint
- * that returns { meeting, attendee } from the backend Lambda.
+ * AWS Chime Client - Using SDK v3 API
  */
 
 const API_URL = "https://ytzz5sx9r1.execute-api.ap-southeast-2.amazonaws.com/prod/join";
@@ -40,7 +38,7 @@ async function fetchMeeting(meetingId, name, region) {
   if (!res.ok) {
     throw new Error(`Backend error: ${res.status}`);
   }
-  return await res.json(); // expected: { meeting, attendee }
+  return await res.json();
 }
 
 async function joinMeeting() {
@@ -87,7 +85,7 @@ async function joinMeeting() {
     isAudioOn = true;
     toggleAudioButton.textContent = "Mute";
 
-    setStatus("Meeting joined. You can now start video and choose background.");
+    setStatus("Meeting joined. Click 'Start Video' to enable camera.");
   } catch (err) {
     console.error(err);
     setStatus("Error joining meeting: " + err.message);
@@ -115,31 +113,29 @@ async function populateDeviceLists() {
     micSelect.appendChild(opt);
   });
 
+  // Select first devices but don't start them yet
   if (devices.length > 0) {
-    await audioVideo.startVideoInput(devices[0].deviceId);
+    cameraSelect.value = devices[0].deviceId;
   }
   if (mics.length > 0) {
+    micSelect.value = mics[0].deviceId;
+    // Start audio input automatically
     await audioVideo.startAudioInput(mics[0].deviceId);
   }
 }
 
 function bindVideoTiles() {
-  const previewEl = document.getElementById("video-preview");
-  const remoteContainer = document.getElementById("remote-videos");
-
-  audioVideo.bindVideoElement(1, createOrGetVideoElement(previewEl, "localVideo"));
-
-  audioVideo.observeVideoTile({
+  const observer = {
     videoTileDidUpdate: (tileState) => {
-      if (!tileState.boundAttendeeId || tileState.localTile) {
+      if (!tileState.boundAttendeeId) {
         return;
       }
-      const tileId = tileState.tileId;
-      const videoEl = createOrGetVideoElement(
-        remoteContainer,
-        `remoteVideo-${tileId}`
-      );
-      audioVideo.bindVideoElement(tileId, videoEl);
+      
+      const videoElement = tileState.localTile
+        ? document.getElementById("localVideo") || createVideoElement("localVideo", "video-preview")
+        : document.getElementById(`remoteVideo-${tileState.tileId}`) || createVideoElement(`remoteVideo-${tileState.tileId}`, "remote-videos");
+      
+      audioVideo.bindVideoElement(tileState.tileId, videoElement);
     },
     videoTileWasRemoved: (tileId) => {
       const el = document.getElementById(`remoteVideo-${tileId}`);
@@ -147,38 +143,62 @@ function bindVideoTiles() {
         el.parentNode.removeChild(el);
       }
     },
-  });
+  };
+  
+  audioVideo.addObserver(observer);
 }
 
-function createOrGetVideoElement(container, id) {
-  let video = document.getElementById(id);
-  if (!video) {
-    video = document.createElement("video");
-    video.id = id;
-    video.autoplay = true;
-    video.muted = id === "localVideo";
-    video.playsInline = true;
+function createVideoElement(id, containerId) {
+  const container = document.getElementById(containerId);
+  const video = document.createElement("video");
+  video.id = id;
+  video.autoplay = true;
+  video.muted = id === "localVideo";
+  video.playsInline = true;
+  video.style.width = "100%";
+  video.style.height = "100%";
+  video.style.objectFit = "cover";
+  
+  if (id === "localVideo") {
     container.innerHTML = "";
-    container.appendChild(video);
   }
+  container.appendChild(video);
   return video;
 }
 
 async function toggleVideo() {
   if (!audioVideo) return;
+  
   if (!isVideoOn) {
-    await audioVideo.startLocalVideoTile();
-    isVideoOn = true;
-    toggleVideoButton.textContent = "Stop Video";
+    try {
+      const deviceId = cameraSelect.value;
+      if (deviceId) {
+        await audioVideo.startVideoInput(deviceId);
+        audioVideo.startLocalVideoTile();
+        isVideoOn = true;
+        toggleVideoButton.textContent = "Stop Video";
+        setStatus("Video started");
+      }
+    } catch (err) {
+      console.error("Error starting video:", err);
+      setStatus("Error starting video: " + err.message);
+    }
   } else {
-    await audioVideo.stopLocalVideoTile();
-    isVideoOn = false;
-    toggleVideoButton.textContent = "Start Video";
+    try {
+      audioVideo.stopLocalVideoTile();
+      await audioVideo.stopVideoInput();
+      isVideoOn = false;
+      toggleVideoButton.textContent = "Start Video";
+      setStatus("Video stopped");
+    } catch (err) {
+      console.error("Error stopping video:", err);
+    }
   }
 }
 
 async function toggleAudio() {
   if (!audioVideo) return;
+  
   if (isAudioOn) {
     audioVideo.realtimeMuteLocalAudio();
     isAudioOn = false;
@@ -192,14 +212,23 @@ async function toggleAudio() {
 
 async function leaveMeeting() {
   if (audioVideo) {
+    if (isVideoOn) {
+      audioVideo.stopLocalVideoTile();
+      await audioVideo.stopVideoInput();
+    }
     audioVideo.stop();
   }
   meetingSession = null;
   audioVideo = null;
   isVideoOn = false;
   isAudioOn = false;
-  toggleVideoButton.textContent = "Toggle Video";
-  toggleAudioButton.textContent = "Toggle Audio";
+  toggleVideoButton.textContent = "Start Video";
+  toggleAudioButton.textContent = "Mute";
+  
+  // Clear video elements
+  document.getElementById("video-preview").innerHTML = "";
+  document.getElementById("remote-videos").innerHTML = "";
+  
   setStatus("Left the meeting.");
 }
 
@@ -208,6 +237,15 @@ toggleVideoButton.addEventListener("click", toggleVideo);
 toggleAudioButton.addEventListener("click", toggleAudio);
 leaveButton.addEventListener("click", leaveMeeting);
 
-// NOTE: Background blur / replacement requires Chime SDK background filters module.
-// That wiring can be added later by creating a VideoTransformDevice and
-// plugging it into the chosen video input. This starter keeps it simple.
+// Camera/mic selection change handlers
+cameraSelect.addEventListener("change", async () => {
+  if (isVideoOn && audioVideo) {
+    await audioVideo.startVideoInput(cameraSelect.value);
+  }
+});
+
+micSelect.addEventListener("change", async () => {
+  if (audioVideo) {
+    await audioVideo.startAudioInput(micSelect.value);
+  }
+});

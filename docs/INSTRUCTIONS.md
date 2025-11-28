@@ -182,9 +182,9 @@ Outputs:
 </html>
 ```
 
-### `app.js` (Key Functions)
+### `app.js` (Key Functions - SDK v3 API)
 ```javascript
-// Device selection - use startVideoInput/startAudioInput (v3 API)
+// Device population - lists devices and starts audio automatically
 async function populateDeviceLists() {
   const devices = await audioVideo.listVideoInputDevices();
   cameraSelect.innerHTML = "";
@@ -204,14 +204,67 @@ async function populateDeviceLists() {
     micSelect.appendChild(opt);
   });
 
+  // Select first devices but don't start video yet
   if (devices.length > 0) {
-    await audioVideo.startVideoInput(devices[0].deviceId);
+    cameraSelect.value = devices[0].deviceId;
   }
   if (mics.length > 0) {
+    micSelect.value = mics[0].deviceId;
+    // Start audio input automatically
     await audioVideo.startAudioInput(mics[0].deviceId);
   }
 }
+
+// Video toggle - uses startVideoInput + startLocalVideoTile (v3)
+async function toggleVideo() {
+  if (!audioVideo) return;
+  
+  if (!isVideoOn) {
+    const deviceId = cameraSelect.value;
+    if (deviceId) {
+      await audioVideo.startVideoInput(deviceId);
+      audioVideo.startLocalVideoTile();
+      isVideoOn = true;
+      toggleVideoButton.textContent = "Stop Video";
+    }
+  } else {
+    audioVideo.stopLocalVideoTile();
+    await audioVideo.stopVideoInput();
+    isVideoOn = false;
+    toggleVideoButton.textContent = "Start Video";
+  }
+}
+
+// Video tile observer - uses addObserver (v3)
+function bindVideoTiles() {
+  const observer = {
+    videoTileDidUpdate: (tileState) => {
+      if (!tileState.boundAttendeeId) return;
+      
+      const videoElement = tileState.localTile
+        ? document.getElementById("localVideo") || createVideoElement("localVideo", "video-preview")
+        : document.getElementById(`remoteVideo-${tileState.tileId}`) || createVideoElement(`remoteVideo-${tileState.tileId}`, "remote-videos");
+      
+      audioVideo.bindVideoElement(tileState.tileId, videoElement);
+    },
+    videoTileWasRemoved: (tileId) => {
+      const el = document.getElementById(`remoteVideo-${tileId}`);
+      if (el && el.parentNode) {
+        el.parentNode.removeChild(el);
+      }
+    },
+  };
+  
+  audioVideo.addObserver(observer);
+}
 ```
+
+**Key v3 API Changes:**
+- `startVideoInput()` / `stopVideoInput()` for camera control
+- `startAudioInput()` for microphone selection
+- `addObserver()` instead of `observeVideoTile()`
+- Video tile binding uses same `bindVideoElement()`
+- Audio mute/unmute methods remain the same
 
 **Note:** The frontend uses [esm.sh](https://esm.sh) CDN which automatically converts NPM packages to browser-compatible ES modules. This allows using the latest Chime SDK (v3.x) without a build step.
 
