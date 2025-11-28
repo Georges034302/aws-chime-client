@@ -527,12 +527,23 @@ document.getElementById("bgImage").addEventListener("change", (e) => {
 });
 
 // When "Image" mode is selected
+// Load background image as HTMLImageElement
 const img = new Image();
-img.src = selectedBackgroundImage; // data URL from file upload
-await img.decode();
+img.crossOrigin = "anonymous";
 
-// Create replacement processor
-const replaceProcessor = await BackgroundReplacementVideoFrameProcessor.create(null, { imageBlob: img });
+// Wait for image to load
+await new Promise((resolve, reject) => {
+  img.onload = resolve;
+  img.onerror = reject;
+  img.src = selectedBackgroundImage; // data URL from file upload
+});
+
+console.log("Image loaded:", img.width, "x", img.height);
+
+// Create replacement processor with image element
+const replaceProcessor = await BackgroundReplacementVideoFrameProcessor.create(null, {
+  imageBlob: img
+});
 
 // Stop current video input
 await audioVideo.stopVideoInput();

@@ -349,12 +349,24 @@ bgModeSelect.addEventListener("change", async () => {
         throw new Error("Background replacement not available. Check SDK loading.");
       }
       
-      // Load background image
+      // Load background image as HTMLImageElement
       const img = new Image();
-      img.src = selectedBackgroundImage;
-      await img.decode();
+      img.crossOrigin = "anonymous";
       
-      currentProcessor = await BackgroundReplacementVideoFrameProcessor.create(null, { imageBlob: img });
+      // Wait for image to load
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = selectedBackgroundImage;
+      });
+      
+      console.log("Image loaded:", img.width, "x", img.height);
+      
+      // Create processor with image element
+      currentProcessor = await BackgroundReplacementVideoFrameProcessor.create(null, {
+        imageBlob: img
+      });
+      
       await audioVideo.stopVideoInput();
       
       // Create transform device with replacement processor
