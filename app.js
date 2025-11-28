@@ -369,7 +369,7 @@ async function applyBackground(mode) {
 
     currentTransformDevice =
       new ChimeSDK.DefaultVideoTransformDevice(
-        audioVideo.deviceController,
+        logger,
         cameraSelect.value,
         [currentProcessor]
       );
