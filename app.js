@@ -1,4 +1,5 @@
-import * as ChimeSDK from "./node_modules/amazon-chime-sdk-js/build/browser.js";
+// Use ChimeSDK from window (loaded via CDN in index.html)
+const ChimeSDK = window.ChimeSDK;
 
 /**
  * AWS Chime Client – FIXED VERSION
