@@ -439,8 +439,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("bgImage").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    // Keep Blob, no conversions
     selectedBackgroundImage = file;
     setStatus("Background image loaded.");
   });
@@ -449,6 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bgModeSelect.addEventListener("change", async () => {
     if (!audioVideo || !isVideoOn) {
       setStatus("Start video first.");
+      bgModeSelect.value = "none";
       return;
     }
 
@@ -474,12 +473,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (mode === "blur") {
         const spec = {
           paths: {
-            worker: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/worker.js',
-            wasm: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm',
-            simd: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation-simd.wasm'
+            worker: './libs/background-filters/worker.js',
+            wasm: './libs/background-filters/segmentation.wasm',
+            simd: './libs/background-filters/segmentation.wasm'
           },
-          blurStrength: 40,
-          logger
+          blurStrength: 40
         };
         currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(spec);
       }
@@ -493,12 +491,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spec = {
           paths: {
-            worker: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/worker.js',
-            wasm: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm',
-            simd: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation-simd.wasm'
+            worker: './libs/background-filters/worker.js',
+            wasm: './libs/background-filters/segmentation.wasm',
+            simd: './libs/background-filters/segmentation.wasm'
           },
-          imageBlob: selectedBackgroundImage,
-          logger
+          imageBlob: selectedBackgroundImage
         };
         currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec);
       }
