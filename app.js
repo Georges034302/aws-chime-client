@@ -435,18 +435,13 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Background image upload
-  document.getElementById("bgImage").addEventListener("change", async (e) => {
+  document.getElementById("bgImage").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    try {
-      // Convert file directly to ImageBitmap
-      selectedBackgroundImage = await createImageBitmap(file);
-      setStatus("Background image loaded.");
-    } catch (err) {
-      console.error("Image load error:", err);
-      setStatus("Failed to load image: " + err.message);
-    }
+    // Keep Blob, no conversions
+    selectedBackgroundImage = file;
+    setStatus("Background image loaded.");
   });
 
   // Background mode change
@@ -500,14 +495,14 @@ document.addEventListener("DOMContentLoaded", () => {
             wasm: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm',
             simd: 'https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation-simd.wasm'
           },
-          replacementImage: selectedBackgroundImage
+          imageBlob: selectedBackgroundImage
         };
         currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(spec);
       }
 
       // Wrap processor in DefaultVideoTransformDevice
       const transformDevice = new ChimeSDK.DefaultVideoTransformDevice(
-        meetingSession.deviceController,
+        audioVideo.deviceController,
         deviceId,
         [currentProcessor]
       );
