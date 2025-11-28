@@ -1,7 +1,8 @@
-# 🌐 AWS Chime Client — Web Interface
+# 🌐 AWS Chime Client v4.0 — Enterprise Web Interface
 
-Welcome to the official project homepage for the **AWS Chime Client**.  
-This site hosts the browser-based interface used to join Chime meetings with a custom virtual background.
+Welcome to the official project homepage for the **AWS Chime Client v4.0**.  
+**Production-ready with AWS Cognito authentication and enterprise-grade security.**  
+This site hosts the browser-based interface used to join Chime meetings with advanced video features.
 
 ## 🎯 Features
 - **🔐 AWS Cognito authentication** with secure hosted UI

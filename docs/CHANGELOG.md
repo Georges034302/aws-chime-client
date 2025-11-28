@@ -81,18 +81,31 @@
 - 🔧 Resolved WASM loading in production environment
 - ⚠️ Note: Background filters don't work in GitHub Codespaces (use GitHub Pages or local HTTPS)
 
-## v4.0.0 — 🔐 COGNITO AUTHENTICATION (November 28, 2025)
-**ENTERPRISE-READY AUTHENTICATION** - Production deployment with AWS Cognito
-- ✅ **AWS Cognito User Pool** - Secure user authentication with hosted UI
-- ✅ **JWT token authorization** - API Gateway Cognito authorizer integration
-- ✅ **Login/logout flow** - Professional authentication experience
-- ✅ **Auth guards** - Meeting access requires authentication
-- ✅ **Production deployment** - Full AWS infrastructure with SAM CloudFormation
-- ✅ **Cross-platform support** - Works on localhost and GitHub Pages
-- 🔧 Updated SAM template with Cognito User Pool, App Client, and Domain
-- 🔧 Enhanced frontend with authentication UI and token handling
-- 🔧 API Gateway configured with Cognito authorizer for secure endpoints
-- 🔧 Fetch interceptor automatically attaches JWT tokens to API calls
+## v4.0.0 — 🔐 PRODUCTION-READY ENTERPRISE AUTHENTICATION (November 28, 2025)
+**COMPLETE AUTHENTICATION & BACKGROUND PROCESSING** - Enterprise-grade security with stable video features
+- ✅ **AWS Cognito Integration** - Secure hosted UI authentication with user pool management
+- ✅ **JWT Token Authorization** - API Gateway Cognito authorizer with automatic token handling
+- ✅ **Professional Login Flow** - Seamless authentication UI with login/logout capabilities
+- ✅ **Meeting Access Control** - Authentication required before joining meetings
+- ✅ **Background Filters Fixed** - Stable WebAssembly background blur and image replacement
+- ✅ **WASM CDN Integration** - Optimized loading from Amazon's official CDN infrastructure
+- ✅ **Multi-Environment Support** - Works flawlessly in localhost, GitHub Codespaces, and production
+- ✅ **Production Deployment** - Complete AWS SAM CloudFormation infrastructure automation
+- ✅ **Enhanced Error Handling** - Graceful fallbacks and detailed error logging
+- ✅ **Professional UI** - Polished dark theme with authentication status indicators
+
+### Technical Improvements (v4.0)
+- 🔧 **SAM Template Enhancement** - Added Cognito User Pool, App Client, Domain, and proper CORS
+- 🔧 **Frontend Authentication** - Complete auth flow with token validation and storage
+- 🔧 **API Security** - JWT authorizer protection for all meeting endpoints  
+- 🔧 **Background Processing** - Fixed WASM paths using mixed CDN/local worker architecture
+- 🔧 **Error Recovery** - Robust error handling for authentication and video processing failures
+- 🔧 **Code Quality** - Clean separation of concerns with modular authentication and video handling
+
+### Breaking Changes (v4.0)
+- 🚨 **Authentication Required** - All meeting access now requires Cognito authentication
+- 🚨 **API Changes** - Authorization header required for backend API calls
+- 🚨 **WASM Paths Updated** - Background filters now use optimized CDN + local worker pattern
 
 ## v5.0.0 — Planned
 - Background image presets gallery

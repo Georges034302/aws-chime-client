@@ -8,12 +8,12 @@
  */
 import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
 
-// Use local working WASM files with correct names that worker expects
+// Use ChimeSDK's official CDN for WASM files, local worker (working pattern from v3.0)
 const ROOT = window.location.origin + window.location.pathname.replace(/index\.html$/, "");
 const FILTER_PATHS = {
   worker: `${ROOT}background-filters/worker.js`,
-  wasm: `${ROOT}background-filters/_cwt-wasm.wasm`,
-  simd: `${ROOT}background-filters/_cwt-wasm-simd.wasm`,
+  wasm: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm.wasm`,
+  simd: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm-simd.wasm`,
 };
 
 const API_URL =
@@ -349,63 +349,51 @@ async function applyBackground(mode) {
   try {
     setStatus("Applying background…");
 
+    // Clean up previous processor
     if (currentProcessor) {
       await currentProcessor.destroy();
       currentProcessor = null;
     }
 
     if (mode === "none") {
-      await startVideoTransformDevice(cameraSelect.value);
+      currentTransformDevice = null;
+      await audioVideo.stopVideoInput();
+      await audioVideo.startVideoInput(cameraSelect.value);
+      audioVideo.startLocalVideoTile();
       setStatus("Background removed.");
       return;
     }
 
-    try {
-      if (mode === "blur") {
-        setStatus("Initializing background blur...");
-        currentProcessor =
-          await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(
-            { paths: FILTER_PATHS },
-            { blurStrength: 40 }
-          );
-      }
-
-      if (mode === "image") {
-        if (!selectedBackgroundImage) {
-          setStatus("Upload a background image.");
-          return;
-        }
-        
-        setStatus("Initializing background replacement...");
-        currentProcessor =
-          await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(
-            { paths: FILTER_PATHS },
-            { imageBlob: selectedBackgroundImage }
-          );
-      }
-    } catch (error) {
-      console.error("Background processor creation failed:", error);
-      setStatus(`Background error: ${error.message}`);
-      return;
+    if (mode === "blur") {
+      currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create(
+        { paths: FILTER_PATHS },
+        { blurStrength: 40 }
+      );
     }
 
-    // If no processor (background filters disabled), just use regular camera
-    if (currentProcessor) {
-      currentTransformDevice =
-        new ChimeSDK.DefaultVideoTransformDevice(
-          logger,
-          cameraSelect.value,
-          [currentProcessor]
-        );
-      await audioVideo.stopVideoInput();
-      await audioVideo.startVideoInput(currentTransformDevice);
-      setStatus("Background applied.");
-    } else {
-      // Use camera without any background processing
-      await audioVideo.stopVideoInput();
-      await audioVideo.startVideoInput(cameraSelect.value);
-      setStatus("Camera started without background processing.");
+    if (mode === "image") {
+      if (!selectedBackgroundImage) {
+        setStatus("Upload a background image.");
+        return;
+      }
+
+      currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(
+        { paths: FILTER_PATHS },
+        { imageBlob: selectedBackgroundImage }
+      );
     }
+
+    currentTransformDevice = new ChimeSDK.DefaultVideoTransformDevice(
+      logger,
+      cameraSelect.value,
+      [currentProcessor]
+    );
+
+    await audioVideo.stopVideoInput();
+    await audioVideo.startVideoInput(currentTransformDevice);
+    audioVideo.startLocalVideoTile();
+
+    setStatus("Background applied.");
     
     audioVideo.startLocalVideoTile();
 

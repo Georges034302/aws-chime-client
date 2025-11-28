@@ -1,6 +1,7 @@
-# AWS Chime Client — Deployment & Configuration Instructions
+# AWS Chime Client v4.0 — Deployment & Configuration Instructions
 
-This guide explains how to deploy the AWS backend (Lambda + API Gateway + **Cognito Authentication**) using AWS SAM in **ap-southeast-2**, and how to configure the frontend for secure, authenticated access to Chime meetings.
+**v4.0 Production Release** with enterprise AWS Cognito authentication and stable background processing.  
+This guide explains how to deploy the complete secure infrastructure (Lambda + API Gateway + Cognito) using AWS SAM in **ap-southeast-2**, and configure the frontend for authenticated access to Chime meetings.
 
 ---
 

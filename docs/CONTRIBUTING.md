@@ -1,6 +1,7 @@
 # Contributing Guide - AWS Chime Client v4.0
 
 Thank you for considering contributing to **AWS Chime Client v4.0**!  
+**v4.0 brings enterprise-ready AWS Cognito authentication and production-stable background processing.**  
 We welcome improvements, ideas, bug reports, and feature suggestions.
 
 ## How to Contribute
