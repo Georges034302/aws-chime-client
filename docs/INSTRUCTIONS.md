@@ -491,89 +491,79 @@ window.BackgroundReplacementVideoFrameProcessor = ChimeSDK.BackgroundReplacement
 
 **Background Blur (app.js):**
 ```javascript
-// Create blur processor
-const blurProcessor = await BackgroundBlurVideoFrameProcessor.create();
+// Define WASM and worker paths
+const workerURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/worker.js";
+const wasmURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm";
 
-// Stop current video input
-await audioVideo.stopVideoInput();
+// Create blur processor with paths and strength
+currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create({
+  paths: { worker: workerURL, wasm: wasmURL },
+  blurStrength: 40,
+});
 
-// Create transform device with blur using DefaultVideoTransformDevice
-const transformDevice = new ChimeSDK.DefaultVideoTransformDevice(
-  meetingSession.deviceController,
-  deviceId,
-  [blurProcessor]
-);
+// Apply transform using helper function
+await applyTransform(deviceId);
 
-// Start video with blur applied
-await audioVideo.startVideoInput(transformDevice);
-audioVideo.startLocalVideoTile();
+// applyTransform helper function
+async function applyTransform(deviceId) {
+  await audioVideo.stopVideoInput();
+
+  videoTransformDevice = new ChimeSDK.DefaultVideoTransformDevice(
+    meetingSession.deviceController,
+    deviceId,
+    [currentProcessor]
+  );
+
+  await audioVideo.startVideoInput(videoTransformDevice);
+  audioVideo.startLocalVideoTile();
+}
 ```
 
 **Background Replacement (app.js):**
 ```javascript
-// Background image upload handler - just stores file reference
-document.getElementById("bgImage").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    console.log("Background image file selected:", file.name);
-    setStatus("✓ Background image selected. Choose 'Image' mode to apply.");
-  }
-});
-
-// When "Image" mode is selected - convert file to ImageBitmap
+// Read file directly from input when "Image" mode is selected
 const fileInput = document.getElementById("bgImage");
 const file = fileInput.files[0];
 
 if (!file) {
-  setStatus("Please upload a background image first.");
+  setStatus("Upload an image first.");
   return;
 }
 
 // Convert uploaded file → ImageBitmap (required by Chime SDK v3)
-let imageBitmap;
-try {
-  imageBitmap = await createImageBitmap(file);
-  console.log("ImageBitmap created:", imageBitmap.width, "x", imageBitmap.height);
-} catch (err) {
-  console.error("Failed to create ImageBitmap:", err);
-  setStatus("Error: Unable to load background image");
-  return;
-}
+const bitmap = await createImageBitmap(file);
 
-// Specify WASM and worker paths for ESM loading
-const workerURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/backgroundfilter/worker.js";
-const wasmURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/backgroundfilter/_cwt-wasm.wasm";
+// Define WASM and worker paths (same as blur)
+const workerURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/worker.js";
+const wasmURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm";
 
-// Create replacement processor with ImageBitmap
-const replaceProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create({
-  paths: {
-    worker: workerURL,
-    wasm: wasmURL,
-  },
-  replacementImage: imageBitmap,
+// Create replacement processor with ImageBitmap and paths
+currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create({
+  paths: { worker: workerURL, wasm: wasmURL },
+  replacementImage: bitmap,
 });
 
-// Stop current video input
-await audioVideo.stopVideoInput();
-
-// Create transform device with processor
-const transformDevice = new ChimeSDK.DefaultVideoTransformDevice(
-  meetingSession.deviceController,
-  deviceId,
-  [replaceProcessor]
-);
-
-// Start video with background image
-await audioVideo.startVideoInput(transformDevice);
-audioVideo.startLocalVideoTile();
+// Apply transform using helper function
+await applyTransform(deviceId);
 ```
 
 **Processor Cleanup:**
 ```javascript
-// Always destroy processors when done
-if (currentProcessor) {
-  await currentProcessor.destroy();
-  currentProcessor = null;
+// Clean up processor and transform device
+async function stopVideoWithCleanup() {
+  if (isVideoOn) {
+    audioVideo.stopLocalVideoTile();
+    await audioVideo.stopVideoInput();
+
+    if (currentProcessor) {
+      await currentProcessor.destroy();
+      currentProcessor = null;
+    }
+    videoTransformDevice = null;
+    isVideoOn = false;
+
+    toggleVideoButton.textContent = "Start Video";
+  }
 }
 ```
 
@@ -590,18 +580,18 @@ These are automatically downloaded from AWS CDN at runtime by the SDK. No local 
 
 1. Join meeting and start video
 2. **Upload background image**: Click "Background Image" file input and select an image
-   - Console will log: "Background image file selected: [filename] ([size] KB)"
-   - Status will show: "✓ Background image selected. Choose 'Image' mode to apply."
-3. Select "Blur" from Background Mode dropdown → blur applies immediately
+3. Select "Blur" from Background Mode dropdown → blur applies immediately with strength 40
 4. Select "Image" from dropdown → converts file to ImageBitmap and applies custom background
 5. Select "None" to remove effects
-6. Switch cameras while background effect is preserved
+6. Switch cameras → background effect is preserved via `applyTransform()` helper
 
 **Key Requirements:**
 - Background replacement requires **ImageBitmap** (created via `createImageBitmap(file)`)
 - Both blur and replacement use **DefaultVideoTransformDevice** for processor wrapping
-- WASM/worker paths must be specified when using ESM module loading
-- Image file is read directly from file input, no need to store data URL
+- WASM/worker paths MUST be specified: `build/background-filters/worker.js` and `build/background-filters/segmentation.wasm`
+- `applyTransform(deviceId)` helper function centralizes transform device creation
+- `videoTransformDevice` variable tracks current transform device for lifecycle management
+- `stopVideoWithCleanup()` ensures proper cleanup of processors and transform devices
 
 ---
 
