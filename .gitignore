@@ -2,8 +2,10 @@
 .aws-sam/
 samconfig.toml
 
-# Node modules
+# Node modules (not used - SDK loaded via CDN)
 node_modules/
+package.json
+package-lock.json
 
 # Environment variables
 .env
