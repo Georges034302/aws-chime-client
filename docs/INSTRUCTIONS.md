@@ -169,8 +169,11 @@ Outputs:
   <title>AWS Chime Client</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
-  <!-- Amazon Chime SDK JS - Using version 2.23.0 with UMD build -->
-  <script src="https://unpkg.com/amazon-chime-sdk-js@2.23.0/build/amazon-chime-sdk.min.js"></script>
+  <!-- Amazon Chime SDK JS - Using esm.sh for browser module loading -->
+  <script type="module">
+    import * as ChimeSDK from 'https://esm.sh/amazon-chime-sdk-js@3.20.0';
+    window.ChimeSDK = ChimeSDK;
+  </script>
 </head>
 <body>
   <!-- ... rest of HTML ... -->
@@ -178,7 +181,7 @@ Outputs:
 </html>
 ```
 
-**Note:** The frontend uses Chime SDK v2.23.0 because it includes a browser-compatible UMD build. Version 3.x requires a build step with webpack/rollup.
+**Note:** The frontend uses [esm.sh](https://esm.sh) CDN which automatically converts NPM packages to browser-compatible ES modules. This allows using the latest Chime SDK (v3.x) without a build step.
 
 ---
 
