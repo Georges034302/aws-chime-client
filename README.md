@@ -26,7 +26,8 @@ The goal is to demonstrate how a minimal, elegant Chime client can be built usin
 ## 🚀 Key Features
 - **Background blur** using BackgroundBlurVideoFrameProcessor  
 - **Virtual background replacement** with custom image upload  
-- **Transform device pipeline** for real-time video effects  
+- **Transform device pipeline** for real-time video effects with helper functions  
+- **Clean code architecture** with applyTransform() and stopVideoWithCleanup() helpers  
 - Browser‑based video/audio controls with device selection  
 - Zero installation (browser‑only)  
 - Free static hosting via GitHub Pages  
@@ -41,8 +42,10 @@ The goal is to demonstrate how a minimal, elegant Chime client can be built usin
 ### 1️⃣ Frontend — GitHub Pages
 - Lightweight static web client  
 - Uses Amazon Chime SDK JavaScript v3.20.0 (loaded via esm.sh CDN)  
+- Clean SDK loading with minimal global namespace pollution  
 - Background filters: BackgroundBlurVideoFrameProcessor & BackgroundReplacementVideoFrameProcessor  
 - Transform device pipeline for real-time video effects  
+- Helper functions (applyTransform, stopVideoWithCleanup) for maintainable code  
 - Handles UI, device selection, and video processing  
 - WASM segmentation models loaded from AWS CDN at runtime  
 - Connects directly to Chime WebRTC services  

@@ -166,17 +166,24 @@ Outputs:
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AWS Chime Client</title>
+  <title>AWS Chime Client (SDK v3)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
-  <!-- Amazon Chime SDK JS - Using esm.sh for browser module loading -->
+
+  <!-- Load Amazon Chime SDK v3 (ESM, browser-compatible) -->
   <script type="module">
-    import * as ChimeSDK from 'https://esm.sh/amazon-chime-sdk-js@3.20.0';
+    import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
+
+    // Expose SDK globally for app.js
     window.ChimeSDK = ChimeSDK;
   </script>
 </head>
 <body>
   <!-- ... rest of HTML ... -->
+  
+  <!-- App logic -->
   <script src="app.js"></script>
 </body>
 </html>
@@ -484,10 +491,12 @@ The application implements real-time background blur and replacement using Chime
 **SDK Loading (index.html):**
 ```javascript
 import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
+
+// Expose SDK globally for app.js
 window.ChimeSDK = ChimeSDK;
-window.BackgroundBlurVideoFrameProcessor = ChimeSDK.BackgroundBlurVideoFrameProcessor;
-window.BackgroundReplacementVideoFrameProcessor = ChimeSDK.BackgroundReplacementVideoFrameProcessor;
 ```
+
+**Note:** Background filter classes are accessed via `ChimeSDK.BackgroundBlurVideoFrameProcessor` and `ChimeSDK.BackgroundReplacementVideoFrameProcessor` - no need to expose them separately.
 
 **Background Blur (app.js):**
 ```javascript
