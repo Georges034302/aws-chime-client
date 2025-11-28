@@ -36,6 +36,7 @@ Resources:
               Action:
                 - chime:CreateMeeting
                 - chime:CreateAttendee
+                - chime:CreateMeetingWithAttendees
               Resource: "*"
       Events:
         JoinMeetingApi:

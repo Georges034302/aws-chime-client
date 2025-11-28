@@ -1,0 +1,9 @@
+{
+  "name": "chime-meeting-backend",
+  "version": "1.0.0",
+  "description": "AWS Chime SDK Meeting Creator Lambda",
+  "main": "createMeeting.js",
+  "dependencies": {
+    "@aws-sdk/client-chime-sdk-meetings": "^3.700.0"
+  }
+}

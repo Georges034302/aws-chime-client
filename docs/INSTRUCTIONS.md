@@ -10,22 +10,154 @@ Ensure the project has the following layout:
 
 ```
 aws-chime-client/
-│── template.yaml              ← SAM template (must be in root)
-│── backend/
-│    └── createMeeting.js     ← Lambda handler
-│── index.html
-│── app.js                     ← Frontend 
-│── style.css
-│── docs/
-│    └── CONTRIBUTING.md
-│    └── CHANGELOG.md
-│    └── CROADMAP.md
-│    └── index.md
-│── img/
-│    └── logo_dark.png
-│    └── aws_architecture.png
-│── LICENSE
-└── README.md
+├── LICENSE
+├── README.md
+├── app.js                     ← Frontend JavaScript
+├── backend/
+│   ├── createMeeting.js       ← Lambda handler (AWS SDK v3)
+│   └── package.json           ← Node.js dependencies
+├── cleanup.sh                 ← Cleanup script
+├── docs/
+│   ├── CHANGELOG.md
+│   ├── CONTRIBUTING.md
+│   ├── INSTRUCTIONS.md        ← This file
+│   ├── ROADMAP.md
+│   └── index.md
+├── img/
+│   ├── aws_architecture.png
+│   └── logo_dark.png
+├── index.html                 ← Frontend HTML
+├── samconfig.toml             ← SAM deployment config (auto-generated)
+├── style.css                  ← Frontend CSS
+└── template.yaml              ← SAM template
+```
+
+**Important Files:**
+
+### `backend/createMeeting.js`
+```javascript
+// Lambda handler for creating an Amazon Chime SDK meeting + attendee.
+// Uses AWS SDK v3 for Node.js 18+ compatibility.
+
+const { ChimeSDKMeetingsClient, CreateMeetingCommand, CreateAttendeeCommand } = require("@aws-sdk/client-chime-sdk-meetings");
+
+exports.handler = async (event) => {
+  try {
+    const body = event.body ? JSON.parse(event.body) : {};
+    const meetingId = body.meetingId || `demo-${Date.now()}`;
+    const name = body.name || "Guest";
+    const region = body.region || "us-east-1";
+
+    const client = new ChimeSDKMeetingsClient({ region: "us-east-1" });
+    const requestToken = `${meetingId}-${Date.now()}`;
+
+    // Create meeting
+    const createMeetingCommand = new CreateMeetingCommand({
+      ClientRequestToken: requestToken,
+      MediaRegion: region,
+      ExternalMeetingId: meetingId,
+    });
+
+    const meetingResponse = await client.send(createMeetingCommand);
+
+    // Create attendee
+    const createAttendeeCommand = new CreateAttendeeCommand({
+      MeetingId: meetingResponse.Meeting.MeetingId,
+      ExternalUserId: name,
+    });
+
+    const attendeeResponse = await client.send(createAttendeeCommand);
+
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+      body: JSON.stringify({
+        meeting: meetingResponse.Meeting,
+        attendee: attendeeResponse.Attendee,
+      }),
+    };
+  } catch (err) {
+    console.error("Error:", err);
+    return {
+      statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ error: err.message }),
+    };
+  }
+};
+```
+
+### `backend/package.json`
+```json
+{
+  "name": "chime-meeting-backend",
+  "version": "1.0.0",
+  "description": "AWS Chime SDK Meeting Creator Lambda",
+  "main": "createMeeting.js",
+  "dependencies": {
+    "@aws-sdk/client-chime-sdk-meetings": "^3.700.0"
+  }
+}
+```
+
+### `template.yaml`
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Chime Client Backend - Meeting + Attendee Creation
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: nodejs18.x
+    MemorySize: 256
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        CHIME_REGION: ap-southeast-2
+
+Resources:
+  ApiGatewayRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'POST,OPTIONS'"
+        AllowHeaders: "'Content-Type'"
+        AllowOrigin: "'*'"
+
+  CreateMeetingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: CreateMeetingFunction
+      Handler: createMeeting.handler
+      CodeUri: backend/
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - chime:CreateMeeting
+                - chime:CreateAttendee
+                - chime:CreateMeetingWithAttendees
+              Resource: "*"
+      Events:
+        JoinMeetingApi:
+          Type: Api
+          Properties:
+            Path: /join
+            Method: POST
+            RestApiId: !Ref ApiGatewayRestApi
+
+Outputs:
+  ApiURL:
+    Description: "Invoke URL for Join Meeting"
+    Value: !Sub "https://${ApiGatewayRestApi}.execute-api.ap-southeast-2.amazonaws.com/prod/join"
 ```
 
 ---
@@ -85,24 +217,59 @@ sam --version
 
 From the project root:
 
-```
+```bash
 sam build
+```
+
+This will:
+- Install Node.js dependencies from `backend/package.json`
+- Bundle the Lambda function with AWS SDK v3
+- Prepare the deployment package
+
+Expected output:
+```
+Building codeuri: /workspaces/aws-chime-client/backend runtime: nodejs18.x ...
+Running NodejsNpmBuilder:NpmInstall
+Build Succeeded
 ```
 
 ---
 
 ## 5. Deploy the Backend (ap-southeast-2)
 
-```
+### Option 1: Guided Deployment (First Time)
+
+```bash
 sam deploy --guided
 ```
 
 Provide:
 
-- Stack Name: `aws-chime-backend`
+- Stack Name: `aws-chime-api`
 - Region: `ap-southeast-2`
-- Confirm IAM roles: Yes  
-- Save arguments: Yes  
+- Confirm changes before deploy: `Y`
+- Allow SAM CLI IAM role creation: `Y`
+- Disable rollback: `N`
+- CreateMeetingFunction has no authentication. Is this okay?: `y`
+- Save arguments to configuration file: `Y`
+- SAM configuration file: `samconfig.toml`
+- SAM configuration environment: `default`
+
+### Option 2: Direct Deployment (After First Time)
+
+If `samconfig.toml` exists:
+
+```bash
+sam deploy
+```
+
+Or specify parameters manually:
+
+```bash
+sam deploy --stack-name aws-chime-api --region ap-southeast-2 --capabilities CAPABILITY_IAM --resolve-s3
+```
+
+### Deployment Output
 
 SAM will output:
 
@@ -110,23 +277,52 @@ SAM will output:
 ApiURL = https://xxxxx.execute-api.ap-southeast-2.amazonaws.com/prod/join
 ```
 
-Copy this URL.
+Copy this URL - you'll need it for the frontend configuration.
+
+### Verify Deployment
+
+Test the API:
+
+```bash
+curl -X POST https://xxxxx.execute-api.ap-southeast-2.amazonaws.com/prod/join \
+  -H "Content-Type: application/json" \
+  -d '{"meetingId":"test123","name":"TestUser","region":"ap-southeast-2"}' | jq
+```
+
+Expected response:
+```json
+{
+  "meeting": {
+    "MeetingId": "...",
+    "ExternalMeetingId": "test123",
+    "MediaRegion": "ap-southeast-2",
+    ...
+  },
+  "attendee": {
+    "ExternalUserId": "TestUser",
+    "AttendeeId": "...",
+    ...
+  }
+}
+```
 
 ---
 
 ## 6. Configure the Frontend (`app.js`)
 
-Open `app.js` and update:
+Open `app.js` and update the API_URL:
 
-```
+```javascript
 const API_URL = "https://xxxxx.execute-api.ap-southeast-2.amazonaws.com/prod/join";
 ```
 
+Replace `xxxxx` with your actual API Gateway ID from the deployment output.
+
 Commit and push:
 
-```
-git add app.js
-git commit -m "Configured API URL"
+```bash
+git add app.js backend/ template.yaml
+git commit -m "Updated Lambda to AWS SDK v3 and configured API URL"
 git push
 ```
 
@@ -234,6 +430,42 @@ echo "✅ Cleanup complete"
 ```
 
 **Note:** This only removes deployment artifacts. Your application stack (`aws-chime-api`) and API Gateway endpoint remain fully operational.
+
+---
+
+## 10. Troubleshooting
+
+### Error: "Cannot find module 'aws-sdk'"
+
+**Cause:** Lambda is using Node.js 18+ which doesn't include AWS SDK v2.
+
+**Solution:** Ensure you're using the correct code:
+- `backend/createMeeting.js` uses `@aws-sdk/client-chime-sdk-meetings` (SDK v3)
+- `backend/package.json` includes the dependency
+- Run `sam build` before deploying
+
+### Error: "Internal server error"
+
+**Check Lambda logs:**
+```bash
+aws logs tail /aws/lambda/CreateMeetingFunction --region ap-southeast-2 --follow
+```
+
+### Error: "Failed to fetch"
+
+**Possible causes:**
+1. API Gateway CORS not configured properly (check `template.yaml`)
+2. API URL in `app.js` is incorrect
+3. Lambda function has errors (check CloudWatch Logs)
+
+### Update Deployed Lambda
+
+After making code changes:
+
+```bash
+sam build
+sam deploy
+```
 
 ---
 

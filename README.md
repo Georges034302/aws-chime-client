@@ -73,22 +73,26 @@ Other Chime Participants (Official Chime App)
 
 ```
 aws-chime-client/
-│── template.yaml              ← SAM template (must be in root)
-│── backend/
-│    └── createMeeting.js     ← Lambda handler
-│── index.html
-│── app.js                     ← Frontend 
-│── style.css
-│── docs/
-│    └── CONTRIBUTING.md
-│    └── CHANGELOG.md
-│    └── CROADMAP.md
-│    └── index.md
-│── img/
-│    └── logo_dark.png
-│    └── aws_architecture.png
-│── LICENSE
-└── README.md
+├── LICENSE
+├── README.md
+├── app.js                     ← Frontend JavaScript
+├── backend/
+│   ├── createMeeting.js       ← Lambda handler (AWS SDK v3)
+│   └── package.json           ← Node.js dependencies
+├── cleanup.sh                 ← Cleanup script
+├── docs/
+│   ├── CHANGELOG.md
+│   ├── CONTRIBUTING.md
+│   ├── INSTRUCTIONS.md        ← This file
+│   ├── ROADMAP.md
+│   └── index.md
+├── img/
+│   ├── aws_architecture.png
+│   └── logo_dark.png
+├── index.html                 ← Frontend HTML
+├── samconfig.toml             ← SAM deployment config (auto-generated)
+├── style.css                  ← Frontend CSS
+└── template.yaml              ← SAM template
 ```
 
 ---

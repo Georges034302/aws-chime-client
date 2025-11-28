@@ -1,8 +1,7 @@
-// Basic Lambda handler for creating an Amazon Chime meeting + attendee.
-// This assumes the Lambda has permission to call chime:CreateMeeting and chime:CreateAttendee.
-// Region must be set according to your deployment.
+// Lambda handler for creating an Amazon Chime SDK meeting + attendee.
+// Uses AWS SDK v3 for Node.js 18+ compatibility.
 
-const AWS = require("aws-sdk");
+const { ChimeSDKMeetingsClient, CreateMeetingCommand, CreateAttendeeCommand } = require("@aws-sdk/client-chime-sdk-meetings");
 
 exports.handler = async (event) => {
   try {
@@ -11,24 +10,25 @@ exports.handler = async (event) => {
     const name = body.name || "Guest";
     const region = body.region || "us-east-1";
 
-    const chime = new AWS.Chime({ region: "us-east-1" });
-    chime.endpoint = new AWS.Endpoint("https://service.chime.aws.amazon.com");
-
+    const client = new ChimeSDKMeetingsClient({ region: "us-east-1" });
     const requestToken = `${meetingId}-${Date.now()}`;
 
-    const meetingResponse = await chime
-      .createMeeting({
-        ClientRequestToken: requestToken,
-        MediaRegion: region,
-      })
-      .promise();
+    // Create meeting
+    const createMeetingCommand = new CreateMeetingCommand({
+      ClientRequestToken: requestToken,
+      MediaRegion: region,
+      ExternalMeetingId: meetingId,
+    });
 
-    const attendeeResponse = await chime
-      .createAttendee({
-        MeetingId: meetingResponse.Meeting.MeetingId,
-        ExternalUserId: name,
-      })
-      .promise();
+    const meetingResponse = await client.send(createMeetingCommand);
+
+    // Create attendee
+    const createAttendeeCommand = new CreateAttendeeCommand({
+      MeetingId: meetingResponse.Meeting.MeetingId,
+      ExternalUserId: name,
+    });
+
+    const attendeeResponse = await client.send(createAttendeeCommand);
 
     return {
       statusCode: 200,
@@ -42,7 +42,7 @@ exports.handler = async (event) => {
       }),
     };
   } catch (err) {
-    console.error(err);
+    console.error("Error:", err);
     return {
       statusCode: 500,
       headers: {
