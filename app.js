@@ -435,16 +435,18 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Background image upload
-  document.getElementById("bgImage").addEventListener("change", (e) => {
+  document.getElementById("bgImage").addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      selectedBackgroundImage = event.target.result;
+    try {
+      // Convert file directly to ImageBitmap
+      selectedBackgroundImage = await createImageBitmap(file);
       setStatus("Background image loaded.");
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Image load error:", err);
+      setStatus("Failed to load image: " + err.message);
+    }
   });
 
   // Background mode change
@@ -484,18 +486,9 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        const img = new Image();
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          img.src = selectedBackgroundImage;
-        });
-
-        // Convert HTMLImageElement to ImageBitmap (required by SDK v3)
-        const imageBitmap = await createImageBitmap(img);
-
+        // selectedBackgroundImage is already an ImageBitmap
         currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create(null, {
-          imageBlob: imageBitmap,
+          imageBlob: selectedBackgroundImage,
         });
       }
 
