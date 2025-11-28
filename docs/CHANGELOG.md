@@ -39,7 +39,34 @@
 - Updated .gitignore to exclude package files (SDK loaded via CDN)
 - Added eu-west-1 region option
 
-## v1.4.0 — Planned
-- UI enhancements
+## v2.0.0 — Enhanced UI & Screen Sharing
+- Modern glassmorphism UI design with improved visual aesthetics
+- Circle button controls with emoji icons for better UX
+- Screen sharing capability with start/stop controls
+- Dedicated screen share tile display section
+- Improved video grid layout with dual camera/remote view
+- Enhanced device control row with better spacing
+- Toolbar with centered control buttons
+- Responsive card-based layout system
+
+## v3.0.0 — Participants Roster & Real-time Presence
+- Real-time participants list with join/leave tracking
+- Live mute/unmute status indicators (🎤/🔇)
+- Screen sharing presence indicator (🖥️)
+- Attendee name extraction and display
+- Volume indicator integration for remote mute detection
+- Auto-updating roster UI with clean card design
+- Roster observers using Chime SDK v3 realtime subscriptions
+- Professional Zoom/Teams-style participant panel
+
+## v4.0.0 — Planned
 - Background image presets gallery
 - Connection quality indicators
+- Recording capabilities
+- Raise hand feature
+- Active speaker highlighting
+- Mic activity green outline (like Zoom)
+- Chat panel
+- Breakout room support
+- Grid layout for all remote videos
+- Host controls (mute participants, lock room, etc.)

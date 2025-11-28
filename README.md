@@ -26,8 +26,13 @@ The goal is to demonstrate how a minimal, elegant Chime client can be built usin
 ## 🚀 Key Features
 - **Background blur** using BackgroundBlurVideoFrameProcessor  
 - **Virtual background replacement** with custom image upload  
+- **Screen sharing** with dedicated display tile and controls  
+- **Live participants roster** with real-time join/leave tracking  
+- **Mute/unmute indicators** showing live audio status for all participants  
+- **Screen sharing presence** indicator in participant list  
 - **Transform device pipeline** for real-time video effects with helper functions  
 - **Clean code architecture** with applyTransform() and stopVideoWithCleanup() helpers  
+- **Modern glassmorphism UI** with circle button controls  
 - Browser‑based video/audio controls with device selection  
 - Zero installation (browser‑only)  
 - Free static hosting via GitHub Pages  
@@ -44,8 +49,12 @@ The goal is to demonstrate how a minimal, elegant Chime client can be built usin
 - Uses Amazon Chime SDK JavaScript v3.20.0 (loaded via esm.sh CDN)  
 - Clean SDK loading with minimal global namespace pollution  
 - Background filters: BackgroundBlurVideoFrameProcessor & BackgroundReplacementVideoFrameProcessor  
+- **Screen sharing with dedicated tile display**  
+- **Real-time participants roster with presence tracking**  
+- **Mute/unmute status indicators for all attendees**  
 - Transform device pipeline for real-time video effects  
 - Helper functions (applyTransform, stopVideoWithCleanup) for maintainable code  
+- **Modern glassmorphism UI design**  
 - Handles UI, device selection, and video processing  
 - WASM segmentation models loaded from AWS CDN at runtime  
 - Connects directly to Chime WebRTC services  
@@ -130,14 +139,18 @@ aws-chime-client/
 2. Enter meeting ID and your name  
 3. The client requests meeting credentials from AWS Lambda  
 4. Join the meeting via the browser  
-5. Click "Start Video" to enable camera  
-6. Select camera and microphone from device dropdowns  
-7. Choose background mode:  
+5. **View participants list** with real-time join/leave updates  
+6. Click "Start Video" to enable camera  
+7. Select camera and microphone from device dropdowns  
+8. Choose background mode:  
    - **None**: Regular camera feed  
    - **Blur**: Apply background blur effect  
    - **Image**: Upload and apply custom background image  
-8. Video appears with applied background effects in real-time  
-9. Switch cameras while preserving background effects  
+9. Video appears with applied background effects in real-time  
+10. **Click screen share button** to share your screen  
+11. **Monitor participant mute status** in the roster (🎤/🔇)  
+12. **See screen sharing indicator** (🖥️) when someone shares  
+13. Switch cameras while preserving background effects  
 
 ---
 

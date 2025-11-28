@@ -1,213 +1,185 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/* Global Reset */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #0b0c10;
-  color: #f5f7fb;
+  font-family: "Inter", sans-serif;
+  background: #111827;
+  color: #ffffff;
+  padding: 20px;
 }
 
+/* Header */
 .app-header {
   display: flex;
   align-items: center;
-  padding: 16px 32px;
-  border-bottom: 1px solid #1f2833;
-  background: #0b0c10;
+  gap: 15px;
+  margin-bottom: 25px;
 }
 
 .logo {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  margin-right: 16px;
+  height: 60px;
 }
 
 .title-block h1 {
-  margin: 0;
-  font-size: 1.9rem;
+  font-size: 28px;
+  margin-bottom: 4px;
 }
 
 .subtitle {
-  margin: 4px 0 0;
-  font-size: 0.9rem;
-  color: #c5c6c7;
+  color: #9ca3af;
+  font-size: 14px;
 }
 
+/* Card Layout */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
   gap: 24px;
-  padding: 24px 32px 32px;
+  grid-template-columns: 320px 1fr;
 }
 
 .card {
-  background: #111319;
+  padding: 20px;
   border-radius: 16px;
-  padding: 20px 20px 18px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-  border: 1px solid #1f2833;
 }
 
-.card h2 {
-  margin-top: 0;
-  margin-bottom: 16px;
-  font-size: 1.1rem;
+.glass {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
 }
 
+/* Inputs */
 label {
-  display: block;
-  font-size: 0.9rem;
-  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #d1d5db;
 }
 
-input[type="text"],
-select {
-  width: 100%;
-  margin-top: 4px;
-  padding: 8px 10px;
+input, select {
+  padding: 10px;
   border-radius: 8px;
-  border: 1px solid #2e3440;
-  background: #0b0c10;
-  color: #f5f7fb;
+  border: none;
+  margin-top: 6px;
 }
 
-input[type="text"]:focus,
-select:focus {
-  outline: none;
-  border-color: #66fcf1;
-}
-
-.file-label {
-  font-size: 0.85rem;
-}
-
-input[type="file"] {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.8rem;
-}
-
+/* Buttons */
 .btn {
-  border-radius: 999px;
-  padding: 8px 18px;
-  border: 1px solid #45a29e;
-  background: transparent;
-  color: #f5f7fb;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.16s ease, transform 0.12s ease, box-shadow 0.12s ease;
+  font-weight: bold;
 }
 
-.btn.primary {
-  background: linear-gradient(135deg, #66fcf1, #45a29e);
-  border-color: transparent;
-  color: #0b0c10;
-  font-weight: 600;
-  width: 100%;
-  margin-top: 10px;
+.primary {
+  background: #2563eb;
+  color: white;
 }
 
-.btn.danger {
-  border-color: #ff4b5c;
-  color: #ff4b5c;
+.danger {
+  background: #dc2626;
+  color: white;
 }
 
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+.circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 22px;
 }
 
-.status-text {
-  min-height: 20px;
-  margin-top: 8px;
-  font-size: 0.8rem;
-  color: #c5c6c7;
-}
-
-.media-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.video-row {
+/* Video Layout */
+.video-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
-.video-container {
-  display: flex;
-  flex-direction: column;
+.video-box {
+  background: #1f2937;
+  border-radius: 16px;
+  padding: 10px;
 }
 
 .video-tile {
-  position: relative;
-  border-radius: 16px;
-  background: radial-gradient(circle at top left, #1f2833, #0b0c10);
-  border: 1px solid #1f2833;
+  width: 100%;
   height: 260px;
+  background: #000;
+  border-radius: 16px;
   overflow: hidden;
 }
 
-.video-tile video {
+.screen-share-tile {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: 350px;
+  background: #000;
+  border-radius: 16px;
 }
 
-.video-label {
-  margin-top: 6px;
-  font-size: 0.8rem;
-  color: #c5c6c7;
+.hidden {
+  display: none;
 }
 
-.controls-row {
+/* Toolbar */
+.toolbar {
+  margin-top: 20px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-end;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* Device Control Row */
+.device-row {
+  margin-top: 25px;
+  display: flex;
+  gap: 25px;
   justify-content: space-between;
 }
 
-.control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 220px;
+.video-label {
+  text-align: center;
+  margin-top: 8px;
+  color: #9ca3af;
 }
 
-.buttons-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
+/* Footer */
 .app-footer {
-  padding: 10px 32px 24px;
-  font-size: 0.8rem;
-  color: #c5c6c7;
-  border-top: 1px solid #1f2833;
+  text-align: center;
+  margin-top: 30px;
+  color: #6b7280;
 }
 
-@media (max-width: 960px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
+/* Roster List */
+.roster-card {
+  max-height: 500px;
+  overflow-y: auto;
 }
 
-@media (max-width: 640px) {
-  .app-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.roster-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 
-  .logo {
-    margin-bottom: 8px;
-  }
+.roster-list li {
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.roster-name {
+  font-size: 14px;
+}
+
+.roster-icons {
+  display: flex;
+  gap: 10px;
+  font-size: 16px;
 }

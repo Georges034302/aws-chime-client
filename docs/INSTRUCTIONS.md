@@ -32,248 +32,21 @@ aws-chime-client/
 └── template.yaml              ← SAM template
 ```
 
-**Important Files:**
+**Key Files:**
+- **backend/createMeeting.js** - Lambda handler using AWS SDK v3 (`@aws-sdk/client-chime-sdk-meetings`)
+- **backend/package.json** - Dependencies for Lambda
+- **template.yaml** - SAM CloudFormation template for Lambda + API Gateway with CORS
+- **index.html** - Loads Amazon Chime SDK v3.20.0 via esm.sh CDN
+- **app.js** - Frontend implementation with background blur/replacement
 
-### `backend/createMeeting.js`
-```javascript
-// Lambda handler for creating an Amazon Chime SDK meeting + attendee.
-// Uses AWS SDK v3 for Node.js 18+ compatibility.
-
-const { ChimeSDKMeetingsClient, CreateMeetingCommand, CreateAttendeeCommand } = require("@aws-sdk/client-chime-sdk-meetings");
-
-exports.handler = async (event) => {
-  try {
-    const body = event.body ? JSON.parse(event.body) : {};
-    const meetingId = body.meetingId || `demo-${Date.now()}`;
-    const name = body.name || "Guest";
-    const region = body.region || "us-east-1";
-
-    const client = new ChimeSDKMeetingsClient({ region: "us-east-1" });
-    const requestToken = `${meetingId}-${Date.now()}`;
-
-    // Create meeting
-    const createMeetingCommand = new CreateMeetingCommand({
-      ClientRequestToken: requestToken,
-      MediaRegion: region,
-      ExternalMeetingId: meetingId,
-    });
-
-    const meetingResponse = await client.send(createMeetingCommand);
-
-    // Create attendee
-    const createAttendeeCommand = new CreateAttendeeCommand({
-      MeetingId: meetingResponse.Meeting.MeetingId,
-      ExternalUserId: name,
-    });
-
-    const attendeeResponse = await client.send(createAttendeeCommand);
-
-    return {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-      body: JSON.stringify({
-        meeting: meetingResponse.Meeting,
-        attendee: attendeeResponse.Attendee,
-      }),
-    };
-  } catch (err) {
-    console.error("Error:", err);
-    return {
-      statusCode: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({ error: err.message }),
-    };
-  }
-};
-```
-
-### `backend/package.json`
-```json
-{
-  "name": "chime-meeting-backend",
-  "version": "1.0.0",
-  "description": "AWS Chime SDK Meeting Creator Lambda",
-  "main": "createMeeting.js",
-  "dependencies": {
-    "@aws-sdk/client-chime-sdk-meetings": "^3.700.0"
-  }
-}
-```
-
-### `template.yaml`
-```yaml
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: AWS Chime Client Backend - Meeting + Attendee Creation
-
-Globals:
-  Function:
-    Timeout: 10
-    Runtime: nodejs18.x
-    MemorySize: 256
-    Architectures:
-      - arm64
-    Environment:
-      Variables:
-        CHIME_REGION: ap-southeast-2
-
-Resources:
-  ApiGatewayRestApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      StageName: prod
-      Cors:
-        AllowMethods: "'POST,OPTIONS'"
-        AllowHeaders: "'Content-Type'"
-        AllowOrigin: "'*'"
-
-  CreateMeetingFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: CreateMeetingFunction
-      Handler: createMeeting.handler
-      CodeUri: backend/
-      Policies:
-        - Statement:
-            - Effect: Allow
-              Action:
-                - chime:CreateMeeting
-                - chime:CreateAttendee
-                - chime:CreateMeetingWithAttendees
-              Resource: "*"
-      Events:
-        JoinMeetingApi:
-          Type: Api
-          Properties:
-            Path: /join
-            Method: POST
-            RestApiId: !Ref ApiGatewayRestApi
-
-Outputs:
-  ApiURL:
-    Description: "Invoke URL for Join Meeting"
-    Value: !Sub "https://${ApiGatewayRestApi}.execute-api.ap-southeast-2.amazonaws.com/prod/join"
-```
-
-### `index.html` (Frontend SDK)
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>AWS Chime Client (SDK v3)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Main stylesheet -->
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- Load Amazon Chime SDK v3 (ESM, browser-compatible) -->
-  <script type="module">
-    import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
-
-    // Expose SDK globally for app.js
-    window.ChimeSDK = ChimeSDK;
-  </script>
-</head>
-<body>
-  <!-- ... rest of HTML ... -->
-  
-  <!-- App logic -->
-  <script src="app.js"></script>
-</body>
-</html>
-```
-
-### `app.js` (Key Functions - SDK v3 API)
-```javascript
-// Device population - lists devices and starts audio automatically
-async function populateDeviceLists() {
-  const devices = await audioVideo.listVideoInputDevices();
-  cameraSelect.innerHTML = "";
-  devices.forEach((d) => {
-    const opt = document.createElement("option");
-    opt.value = d.deviceId;
-    opt.textContent = d.label || d.deviceId;
-    cameraSelect.appendChild(opt);
-  });
-
-  const mics = await audioVideo.listAudioInputDevices();
-  micSelect.innerHTML = "";
-  mics.forEach((d) => {
-    const opt = document.createElement("option");
-    opt.value = d.deviceId;
-    opt.textContent = d.label || d.deviceId;
-    micSelect.appendChild(opt);
-  });
-
-  // Select first devices but don't start video yet
-  if (devices.length > 0) {
-    cameraSelect.value = devices[0].deviceId;
-  }
-  if (mics.length > 0) {
-    micSelect.value = mics[0].deviceId;
-    // Start audio input automatically
-    await audioVideo.startAudioInput(mics[0].deviceId);
-  }
-}
-
-// Video toggle - uses startVideoInput + startLocalVideoTile (v3)
-async function toggleVideo() {
-  if (!audioVideo) return;
-  
-  if (!isVideoOn) {
-    const deviceId = cameraSelect.value;
-    if (deviceId) {
-      await audioVideo.startVideoInput(deviceId);
-      audioVideo.startLocalVideoTile();
-      isVideoOn = true;
-      toggleVideoButton.textContent = "Stop Video";
-    }
-  } else {
-    audioVideo.stopLocalVideoTile();
-    await audioVideo.stopVideoInput();
-    isVideoOn = false;
-    toggleVideoButton.textContent = "Start Video";
-  }
-}
-
-// Video tile observer - uses addObserver (v3)
-function bindVideoTiles() {
-  const observer = {
-    videoTileDidUpdate: (tileState) => {
-      if (!tileState.boundAttendeeId) return;
-      
-      const videoElement = tileState.localTile
-        ? document.getElementById("localVideo") || createVideoElement("localVideo", "video-preview")
-        : document.getElementById(`remoteVideo-${tileState.tileId}`) || createVideoElement(`remoteVideo-${tileState.tileId}`, "remote-videos");
-      
-      audioVideo.bindVideoElement(tileState.tileId, videoElement);
-    },
-    videoTileWasRemoved: (tileId) => {
-      const el = document.getElementById(`remoteVideo-${tileId}`);
-      if (el && el.parentNode) {
-        el.parentNode.removeChild(el);
-      }
-    },
-  };
-  
-  audioVideo.addObserver(observer);
-}
-```
-
-**Key v3 API Changes:**
+**SDK v3 API Usage:**
 - `startVideoInput()` / `stopVideoInput()` for camera control
 - `startAudioInput()` for microphone selection
-- `addObserver()` instead of `observeVideoTile()`
-- Video tile binding uses same `bindVideoElement()`
-- Audio mute/unmute methods remain the same
+- `addObserver()` for video tile management
+- `BackgroundBlurVideoFrameProcessor` and `BackgroundReplacementVideoFrameProcessor` for effects
+- `DefaultVideoTransformDevice` for applying processors
 
-**Note:** The frontend uses [esm.sh](https://esm.sh) CDN which automatically converts NPM packages to browser-compatible ES modules. This allows using the latest Chime SDK (v3.x) without a build step.
+**Note:** The frontend uses [esm.sh](https://esm.sh) CDN which automatically converts NPM packages to browser-compatible ES modules.
 
 ---
 
@@ -488,119 +261,49 @@ The application implements real-time background blur and replacement using Chime
 
 ### How It Works
 
-**SDK Loading (index.html):**
-```javascript
-import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
+**SDK Loading:**
+- Amazon Chime SDK v3.20.0 loaded via esm.sh CDN in `index.html`
+- Background filter classes accessed via `ChimeSDK.BackgroundBlurVideoFrameProcessor` and `ChimeSDK.BackgroundReplacementVideoFrameProcessor`
 
-// Expose SDK globally for app.js
-window.ChimeSDK = ChimeSDK;
-```
+**Background Blur:**
+- Creates blur processor with WASM/worker paths and blur strength
+- Applies using `DefaultVideoTransformDevice` wrapper
+- WASM worker: `https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/worker.js`
+- WASM binary: `https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm`
 
-**Note:** Background filter classes are accessed via `ChimeSDK.BackgroundBlurVideoFrameProcessor` and `ChimeSDK.BackgroundReplacementVideoFrameProcessor` - no need to expose them separately.
-
-**Background Blur (app.js):**
-```javascript
-// Define WASM and worker paths
-const workerURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/worker.js";
-const wasmURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm";
-
-// Create blur processor with paths and strength
-currentProcessor = await ChimeSDK.BackgroundBlurVideoFrameProcessor.create({
-  paths: { worker: workerURL, wasm: wasmURL },
-  blurStrength: 40,
-});
-
-// Apply transform using helper function
-await applyTransform(deviceId);
-
-// applyTransform helper function
-async function applyTransform(deviceId) {
-  await audioVideo.stopVideoInput();
-
-  videoTransformDevice = new ChimeSDK.DefaultVideoTransformDevice(
-    meetingSession.deviceController,
-    deviceId,
-    [currentProcessor]
-  );
-
-  await audioVideo.startVideoInput(videoTransformDevice);
-  audioVideo.startLocalVideoTile();
-}
-```
-
-**Background Replacement (app.js):**
-```javascript
-// Read file directly from input when "Image" mode is selected
-const fileInput = document.getElementById("bgImage");
-const file = fileInput.files[0];
-
-if (!file) {
-  setStatus("Upload an image first.");
-  return;
-}
-
-// Convert uploaded file → ImageBitmap (required by Chime SDK v3)
-const bitmap = await createImageBitmap(file);
-
-// Define WASM and worker paths (same as blur)
-const workerURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/worker.js";
-const wasmURL = "https://esm.sh/amazon-chime-sdk-js@3.20.0/build/background-filters/segmentation.wasm";
-
-// Create replacement processor with ImageBitmap and paths
-currentProcessor = await ChimeSDK.BackgroundReplacementVideoFrameProcessor.create({
-  paths: { worker: workerURL, wasm: wasmURL },
-  replacementImage: bitmap,
-});
-
-// Apply transform using helper function
-await applyTransform(deviceId);
-```
+**Background Replacement:**
+- Reads file from input element
+- Converts to `ImageBitmap` via `createImageBitmap(file)` (required by SDK v3)
+- Creates replacement processor with ImageBitmap and WASM paths
+- Applies using `DefaultVideoTransformDevice`
 
 **Processor Cleanup:**
-```javascript
-// Clean up processor and transform device
-async function stopVideoWithCleanup() {
-  if (isVideoOn) {
-    audioVideo.stopLocalVideoTile();
-    await audioVideo.stopVideoInput();
-
-    if (currentProcessor) {
-      await currentProcessor.destroy();
-      currentProcessor = null;
-    }
-    videoTransformDevice = null;
-    isVideoOn = false;
-
-    toggleVideoButton.textContent = "Start Video";
-  }
-}
-```
+- `stopVideoWithCleanup()` ensures proper cleanup of processors and transform devices
+- Processors destroyed via `await currentProcessor.destroy()`
 
 ### WASM/Model Loading
 
 Background filters require:
-- **WASM worker**: `https://static.sdkassets.chime.aws/bgblur/workers/worker.js`
-- **WASM binary**: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm.wasm`
-- **Segmentation model**: `https://static.sdkassets.chime.aws/bgblur/models/selfie_segmentation_landscape.tflite`
+- **WASM worker**: `build/background-filters/worker.js`
+- **WASM binary**: `build/background-filters/segmentation.wasm`
+- **Segmentation model**: Automatically downloaded from AWS CDN at runtime
 
-These are automatically downloaded from AWS CDN at runtime by the SDK. No local hosting required.
+These are loaded from esm.sh CDN or AWS static assets. No local hosting required.
 
 ### User Workflow
 
 1. Join meeting and start video
 2. **Upload background image**: Click "Background Image" file input and select an image
-3. Select "Blur" from Background Mode dropdown → blur applies immediately with strength 40
+3. Select "Blur" from Background Mode dropdown → blur applies immediately
 4. Select "Image" from dropdown → converts file to ImageBitmap and applies custom background
 5. Select "None" to remove effects
-6. Switch cameras → background effect is preserved via `applyTransform()` helper
+6. Switch cameras → background effect is preserved
 
 **Key Requirements:**
 - Background replacement requires **ImageBitmap** (created via `createImageBitmap(file)`)
 - Both blur and replacement use **DefaultVideoTransformDevice** for processor wrapping
-- WASM/worker paths MUST be specified: `build/background-filters/worker.js` and `build/background-filters/segmentation.wasm`
-- `applyTransform(deviceId)` helper function centralizes transform device creation
-- `videoTransformDevice` variable tracks current transform device for lifecycle management
-- `stopVideoWithCleanup()` ensures proper cleanup of processors and transform devices
+- WASM/worker paths MUST be specified when creating processors
+- Proper cleanup via `destroy()` method prevents memory leaks
 
 ---
 
@@ -610,60 +313,6 @@ To clean up SAM build artifacts and helper resources **without affecting your ru
 
 ```bash
 ./cleanup.sh
-```
-
-Or manually:
-
-```bash
-#!/bin/bash
-
-REGION="ap-southeast-2"
-HELPER_STACK="aws-sam-cli-managed-default"
-
-# Remove local SAM build folder
-rm -rf .aws-sam
-
-# Get SAM artifact bucket
-BUCKET=$(aws cloudformation describe-stack-resources \
-  --stack-name "$HELPER_STACK" \
-  --region "$REGION" \
-  --query "StackResources[?ResourceType=='AWS::S3::Bucket'].PhysicalResourceId" \
-  --output text 2>/dev/null)
-
-# Empty and delete bucket
-if [[ -n "$BUCKET" ]]; then
-  # Delete all object versions
-  aws s3api list-object-versions \
-    --bucket "$BUCKET" \
-    --region "$REGION" \
-    --query 'Versions[].{Key:Key,VersionId:VersionId}' \
-    --output json 2>/dev/null | \
-  jq -r '.[] | "aws s3api delete-object --bucket '$BUCKET' --region '$REGION' --key \"" + .Key + "\" --version-id \"" + .VersionId + "\""' | \
-  bash 2>/dev/null
-  
-  # Delete all delete markers
-  aws s3api list-object-versions \
-    --bucket "$BUCKET" \
-    --region "$REGION" \
-    --query 'DeleteMarkers[].{Key:Key,VersionId:VersionId}' \
-    --output json 2>/dev/null | \
-  jq -r '.[] | "aws s3api delete-object --bucket '$BUCKET' --region '$REGION' --key \"" + .Key + "\" --version-id \"" + .VersionId + "\""' | \
-  bash 2>/dev/null
-  
-  # Delete bucket
-  aws s3 rb "s3://$BUCKET" --force --region "$REGION" 2>/dev/null
-fi
-
-# Delete SAM helper stack
-aws cloudformation delete-stack \
-  --stack-name "$HELPER_STACK" \
-  --region "$REGION" 2>/dev/null
-
-aws cloudformation wait stack-delete-complete \
-  --stack-name "$HELPER_STACK" \
-  --region "$REGION" 2>/dev/null
-
-echo "✅ Cleanup complete"
 ```
 
 **Note:** This only removes deployment artifacts. Your application stack (`aws-chime-api`) and API Gateway endpoint remain fully operational.

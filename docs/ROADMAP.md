@@ -15,16 +15,21 @@
 - Device selection (camera/microphone) ✓
 - Transform device pipeline ✓
 
-## Phase 3 — UI/UX Improvements (Planned)
+## Phase 2.5 — UI/UX Improvements (Completed)
+- Modern glassmorphism UI design ✓
+- Screen sharing support ✓
+- Real-time participants roster ✓
+- Mute/unmute status indicators ✓
+- Screen sharing presence indicators ✓
+
+## Phase 3 — Advanced Features (Planned)
 - Background image gallery presets
 - Connection quality indicators
 - Device permissions checker
 - Enhanced error messaging
-
-## Phase 3 — Advanced Features
-- Screen-sharing support
 - Multi-participant grid layout improvements
 - Dark/light mode theme toggle
+- Recording capabilities
 
 ## Phase 4 — Long-Term Vision
 - Plugin system
