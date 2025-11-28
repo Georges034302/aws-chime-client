@@ -13,6 +13,8 @@ let meetingSession = null;
 let audioVideo = null;
 let isVideoOn = false;
 let isAudioOn = true;
+let currentProcessor = null;
+let selectedBackgroundImage = null;
 
 const statusEl = document.getElementById("status");
 const joinButton = document.getElementById("joinButton");
@@ -187,6 +189,14 @@ async function toggleVideo() {
     try {
       audioVideo.stopLocalVideoTile();
       await audioVideo.stopVideoInput();
+      
+      // Clean up background processor
+      if (currentProcessor) {
+        await currentProcessor.destroy();
+        currentProcessor = null;
+        bgModeSelect.value = "none";
+      }
+      
       isVideoOn = false;
       toggleVideoButton.textContent = "Start Video";
       setStatus("Video stopped");
@@ -218,12 +228,21 @@ async function leaveMeeting() {
     }
     audioVideo.stop();
   }
+  
+  // Clean up background processor
+  if (currentProcessor) {
+    await currentProcessor.destroy();
+    currentProcessor = null;
+  }
+  
   meetingSession = null;
   audioVideo = null;
   isVideoOn = false;
   isAudioOn = false;
   toggleVideoButton.textContent = "Start Video";
   toggleAudioButton.textContent = "Mute";
+  bgModeSelect.value = "none";
+  selectedBackgroundImage = null;
   
   // Clear video elements
   document.getElementById("video-preview").innerHTML = "";
@@ -240,12 +259,120 @@ leaveButton.addEventListener("click", leaveMeeting);
 // Camera/mic selection change handlers
 cameraSelect.addEventListener("change", async () => {
   if (isVideoOn && audioVideo) {
-    await audioVideo.startVideoInput(cameraSelect.value);
+    const deviceId = cameraSelect.value;
+    
+    // If background processor is active, recreate transform device
+    if (currentProcessor) {
+      try {
+        await audioVideo.stopVideoInput();
+        const transformDevice = await currentProcessor.createTransformDevice(deviceId);
+        await audioVideo.startVideoInput(transformDevice);
+        audioVideo.startLocalVideoTile();
+      } catch (err) {
+        console.error("Error switching camera with background:", err);
+        setStatus("Error switching camera: " + err.message);
+      }
+    } else {
+      await audioVideo.startVideoInput(deviceId);
+    }
   }
 });
 
 micSelect.addEventListener("change", async () => {
   if (audioVideo) {
     await audioVideo.startAudioInput(micSelect.value);
+  }
+});
+
+// Background image upload handler
+document.getElementById("bgImage").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      selectedBackgroundImage = event.target.result;
+      setStatus("Background image loaded. Select 'Image' mode to apply.");
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Background mode change handler
+bgModeSelect.addEventListener("change", async () => {
+  if (!audioVideo || !isVideoOn) {
+    setStatus("Please start video before applying background effects.");
+    return;
+  }
+  
+  const mode = bgModeSelect.value;
+  
+  try {
+    setStatus("Applying background effect...");
+    
+    // Stop current processor if exists
+    if (currentProcessor) {
+      await currentProcessor.destroy();
+      currentProcessor = null;
+    }
+    
+    const deviceId = cameraSelect.value;
+    
+    if (mode === "blur") {
+      // Create background blur processor
+      const { BackgroundBlurVideoFrameProcessor } = window;
+      if (!BackgroundBlurVideoFrameProcessor) {
+        throw new Error("Background blur not available. Check SDK loading.");
+      }
+      
+      currentProcessor = await BackgroundBlurVideoFrameProcessor.create();
+      await audioVideo.stopVideoInput();
+      
+      // Create transform device with blur processor
+      const transformDevice = await currentProcessor.createTransformDevice(deviceId);
+      await audioVideo.startVideoInput(transformDevice);
+      
+      setStatus("Background blur applied");
+      
+    } else if (mode === "image") {
+      if (!selectedBackgroundImage) {
+        setStatus("Please upload a background image first.");
+        bgModeSelect.value = "none";
+        return;
+      }
+      
+      // Create background replacement processor
+      const { BackgroundReplacementVideoFrameProcessor } = window;
+      if (!BackgroundReplacementVideoFrameProcessor) {
+        throw new Error("Background replacement not available. Check SDK loading.");
+      }
+      
+      // Load background image
+      const img = new Image();
+      img.src = selectedBackgroundImage;
+      await img.decode();
+      
+      currentProcessor = await BackgroundReplacementVideoFrameProcessor.create(null, { imageBlob: img });
+      await audioVideo.stopVideoInput();
+      
+      // Create transform device with replacement processor
+      const transformDevice = await currentProcessor.createTransformDevice(deviceId);
+      await audioVideo.startVideoInput(transformDevice);
+      
+      setStatus("Background image applied");
+      
+    } else {
+      // No background effect - use regular camera
+      await audioVideo.stopVideoInput();
+      await audioVideo.startVideoInput(deviceId);
+      setStatus("Background effect removed");
+    }
+    
+    // Restart local video tile
+    audioVideo.startLocalVideoTile();
+    
+  } catch (err) {
+    console.error("Error applying background effect:", err);
+    setStatus("Error applying background: " + err.message);
+    bgModeSelect.value = "none";
   }
 });

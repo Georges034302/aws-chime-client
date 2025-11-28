@@ -12,7 +12,26 @@
 - Added LICENSE
 - Added diagrams + logos
 
-## v1.2.0 — Planned
+## v1.2.0 — SDK v3 Migration
+- Migrated backend Lambda to AWS SDK v3 (@aws-sdk/client-chime-sdk-meetings)
+- Updated frontend to Amazon Chime SDK JavaScript v3.20.0
+- Complete rewrite of app.js for v3 API compatibility
+- Added device selection handlers (camera/microphone switching)
+- Fixed video tile management using addObserver() pattern
+- SDK loaded via esm.sh CDN for browser ES module support
+- Updated all documentation with v3 API examples
+
+## v1.3.0 — Background Filters Implementation
+- Implemented background blur using BackgroundBlurVideoFrameProcessor
+- Implemented background replacement with custom image upload
+- Added video transform device pipeline for filter application
+- Background processor lifecycle management (create/destroy)
+- Preserve background effects when switching cameras
+- Proper cleanup on video stop and meeting leave
+- User-friendly status messages for filter operations
+- Runtime WASM/model loading from AWS CDN
+
+## v1.4.0 — Planned
 - UI enhancements
-- Background presets
-- Connection UX improvements
+- Background image presets gallery
+- Connection quality indicators

@@ -5,8 +5,10 @@
 The **AWS Chime Client** is a lightweight, browser‑based web application that enables users to join official Amazon Chime meetings with a **virtual background** or **background blur**.  
 It provides a clean UI, requires **no installation**, and works seamlessly with standard Amazon Chime participants.
 
+Built with **Amazon Chime SDK v3** on the frontend and **AWS SDK v3** on the backend, the application leverages modern JavaScript APIs for optimal performance.
+
 The frontend is served through **GitHub Pages**, while a small, stateless backend on AWS handles meeting creation.  
-All video/audio media flows directly through Amazon Chime’s WebRTC infrastructure.
+All video/audio media flows directly through Amazon Chime's WebRTC infrastructure.
 
 ---
 
@@ -22,13 +24,15 @@ The goal is to demonstrate how a minimal, elegant Chime client can be built usin
 ---
 
 ## 🚀 Key Features
-- **Virtual background replacement**  
-- **Background blur**  
-- Browser‑based video/audio controls  
+- **Background blur** using BackgroundBlurVideoFrameProcessor  
+- **Virtual background replacement** with custom image upload  
+- **Transform device pipeline** for real-time video effects  
+- Browser‑based video/audio controls with device selection  
 - Zero installation (browser‑only)  
 - Free static hosting via GitHub Pages  
 - Interoperable with official Amazon Chime clients  
 - Stateless AWS backend (Lambda + API Gateway)  
+- Runtime WASM/model loading from AWS CDN  
 
 ---
 
@@ -36,13 +40,18 @@ The goal is to demonstrate how a minimal, elegant Chime client can be built usin
 
 ### 1️⃣ Frontend — GitHub Pages
 - Lightweight static web client  
-- Handles UI and video processing  
-- Applies background image and blur  
+- Uses Amazon Chime SDK JavaScript v3.20.0 (loaded via esm.sh CDN)  
+- Background filters: BackgroundBlurVideoFrameProcessor & BackgroundReplacementVideoFrameProcessor  
+- Transform device pipeline for real-time video effects  
+- Handles UI, device selection, and video processing  
+- WASM segmentation models loaded from AWS CDN at runtime  
 - Connects directly to Chime WebRTC services  
 - No servers or deployments required  
 
 ### 2️⃣ Backend — AWS Lambda + API Gateway
-- Creates new meetings and attendees  
+- Creates new meetings and attendees using AWS SDK v3  
+- Built with @aws-sdk/client-chime-sdk-meetings package  
+- Node.js 18.x runtime with CommonJS modules  
 - Stateless and extremely low‑cost  
 - Exposed via a single HTTPS endpoint  
 - Does **not** process video or audio  
@@ -75,10 +84,10 @@ Other Chime Participants (Official Chime App)
 aws-chime-client/
 ├── LICENSE
 ├── README.md
-├── app.js                     ← Frontend JavaScript
+├── app.js                     ← Frontend JavaScript (SDK v3 + Background Filters)
 ├── backend/
 │   ├── createMeeting.js       ← Lambda handler (AWS SDK v3)
-│   └── package.json           ← Node.js dependencies
+│   └── package.json           ← Dependencies (@aws-sdk/client-chime-sdk-meetings)
 ├── cleanup.sh                 ← Cleanup script
 ├── docs/
 │   ├── CHANGELOG.md
@@ -115,11 +124,17 @@ aws-chime-client/
 
 ## 🎮 Usage Overview
 1. Open the GitHub Pages‑hosted site  
-2. Enter or generate a meeting identifier  
-3. The client requests meeting credentials from AWS  
+2. Enter meeting ID and your name  
+3. The client requests meeting credentials from AWS Lambda  
 4. Join the meeting via the browser  
-5. Choose a virtual background or enable blur  
-6. Video appears with applied background effects  
+5. Click "Start Video" to enable camera  
+6. Select camera and microphone from device dropdowns  
+7. Choose background mode:  
+   - **None**: Regular camera feed  
+   - **Blur**: Apply background blur effect  
+   - **Image**: Upload and apply custom background image  
+8. Video appears with applied background effects in real-time  
+9. Switch cameras while preserving background effects  
 
 ---
 

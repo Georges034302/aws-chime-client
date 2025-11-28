@@ -16,6 +16,9 @@ We welcome improvements, ideas, bug reports, and feature suggestions.
 - Maintain browser compatibility  
 - Follow minimalistic UI/UX patterns  
 - Use clear and consistent naming  
+- Use Amazon Chime SDK v3 API (not v2)  
+- Backend uses AWS SDK v3 modular packages  
+- Lambda functions use Node.js 18.x runtime  
 
 ## Reporting Issues
 If you encounter bugs or unexpected behaviors:

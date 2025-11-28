@@ -12,7 +12,7 @@ Ensure the project has the following layout:
 aws-chime-client/
 ├── LICENSE
 ├── README.md
-├── app.js                     ← Frontend JavaScript
+├── app.js                     ← Frontend JavaScript (SDK v3 + Background Filters)
 ├── backend/
 │   ├── createMeeting.js       ← Lambda handler (AWS SDK v3)
 │   └── package.json           ← Node.js dependencies
@@ -26,7 +26,7 @@ aws-chime-client/
 ├── img/
 │   ├── aws_architecture.png
 │   └── logo_dark.png
-├── index.html                 ← Frontend HTML
+├── index.html                 ← Frontend HTML (loads SDK v3 + background filters)
 ├── samconfig.toml             ← SAM deployment config (auto-generated)
 ├── style.css                  ← Frontend CSS
 └── template.yaml              ← SAM template
@@ -475,7 +475,87 @@ Expected flow:
 
 ---
 
-## 9. Cleanup SAM Deployment Artifacts (Optional)
+## 9. Background Filters Implementation
+
+The application implements real-time background blur and replacement using Chime SDK v3 processors.
+
+### How It Works
+
+**SDK Loading (index.html):**
+```javascript
+import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
+window.ChimeSDK = ChimeSDK;
+window.BackgroundBlurVideoFrameProcessor = ChimeSDK.BackgroundBlurVideoFrameProcessor;
+window.BackgroundReplacementVideoFrameProcessor = ChimeSDK.BackgroundReplacementVideoFrameProcessor;
+```
+
+**Background Blur (app.js):**
+```javascript
+// Create blur processor
+const blurProcessor = await BackgroundBlurVideoFrameProcessor.create();
+
+// Stop current video input
+await audioVideo.stopVideoInput();
+
+// Create transform device with blur
+const transformDevice = await blurProcessor.createTransformDevice(deviceId);
+
+// Start video with blur applied
+await audioVideo.startVideoInput(transformDevice);
+audioVideo.startLocalVideoTile();
+```
+
+**Background Replacement (app.js):**
+```javascript
+// Load background image
+const img = new Image();
+img.src = selectedBackgroundImage; // data URL from file upload
+await img.decode();
+
+// Create replacement processor
+const replaceProcessor = await BackgroundReplacementVideoFrameProcessor.create(null, { imageBlob: img });
+
+// Stop current video input
+await audioVideo.stopVideoInput();
+
+// Create transform device with replacement
+const transformDevice = await replaceProcessor.createTransformDevice(deviceId);
+
+// Start video with background image
+await audioVideo.startVideoInput(transformDevice);
+audioVideo.startLocalVideoTile();
+```
+
+**Processor Cleanup:**
+```javascript
+// Always destroy processors when done
+if (currentProcessor) {
+  await currentProcessor.destroy();
+  currentProcessor = null;
+}
+```
+
+### WASM/Model Loading
+
+Background filters require:
+- **WASM worker**: `https://static.sdkassets.chime.aws/bgblur/workers/worker.js`
+- **WASM binary**: `https://static.sdkassets.chime.aws/bgblur/wasm/_cwt-wasm.wasm`
+- **Segmentation model**: `https://static.sdkassets.chime.aws/bgblur/models/selfie_segmentation_landscape.tflite`
+
+These are automatically downloaded from AWS CDN at runtime by the SDK. No local hosting required.
+
+### User Workflow
+
+1. Join meeting and start video
+2. Select "Blur" from Background Mode dropdown → blur applies immediately
+3. Upload custom image via file input
+4. Select "Image" from dropdown → custom background applies
+5. Select "None" to remove effects
+6. Switch cameras while background effect is preserved
+
+---
+
+## 10. Cleanup SAM Deployment Artifacts (Optional)
 
 To clean up SAM build artifacts and helper resources **without affecting your running application**, run:
 
@@ -541,7 +621,7 @@ echo "✅ Cleanup complete"
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 ### Error: "Cannot find module 'aws-sdk'"
 
@@ -574,6 +654,26 @@ After making code changes:
 sam build
 sam deploy
 ```
+
+### Error: "Background blur not available. Check SDK loading."
+
+**Possible causes:**
+1. Background filter classes not loaded in `index.html`
+2. SDK failed to load from esm.sh CDN
+3. Network blocking AWS CDN for WASM/models
+
+**Solution:**
+1. Check browser console for import errors
+2. Verify `window.BackgroundBlurVideoFrameProcessor` exists
+3. Check network tab for failed CDN requests to `static.sdkassets.chime.aws`
+
+### Background Filter Performance Issues
+
+**If blur/replacement is slow or laggy:**
+1. Ensure browser supports WebAssembly and SIMD
+2. Close other tabs/applications to free CPU
+3. Reduce video resolution if possible
+4. Background filters require significant CPU - low-end devices may struggle
 
 ---
 

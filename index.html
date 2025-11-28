@@ -2,31 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AWS Chime Client</title>
+  <title>AWS Chime Client (v3)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <link rel="stylesheet" href="style.css" />
-  <!-- Amazon Chime SDK JS - Using esm.sh for browser module loading -->
+
+  <!-- Load Chime SDK v3 (browser-compatible ESM) -->
   <script type="module">
-    import * as ChimeSDK from 'https://esm.sh/amazon-chime-sdk-js@3.20.0';
+    import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
     window.ChimeSDK = ChimeSDK;
+    // Expose background filter classes globally
+    window.BackgroundBlurVideoFrameProcessor = ChimeSDK.BackgroundBlurVideoFrameProcessor;
+    window.BackgroundReplacementVideoFrameProcessor = ChimeSDK.BackgroundReplacementVideoFrameProcessor;
   </script>
+
 </head>
+
 <body>
+
   <header class="app-header">
     <img class="logo" src="img/logo_dark.png" alt="AWS Chime Client Logo" />
     <div class="title-block">
       <h1>AWS Chime Client</h1>
-      <p class="subtitle">Custom web client with virtual background support</p>
+      <p class="subtitle">Custom Chime Client with Background Blur & Virtual Images (SDK v3)</p>
     </div>
   </header>
 
   <main class="layout">
+
+    <!-- Join Section -->
     <section class="card join-card">
       <h2>Join a Meeting</h2>
+
       <label>
         Meeting ID
-        <input id="meetingId" type="text" placeholder="Enter or generate meeting ID" />
+        <input id="meetingId" type="text" placeholder="Enter meeting ID" />
       </label>
+
       <label>
         Your Name
         <input id="name" type="text" placeholder="Your display name" />
@@ -35,9 +47,9 @@
       <label>
         Region
         <select id="region">
+          <option value="ap-southeast-2">ap-southeast-2</option>
           <option value="us-east-1">us-east-1</option>
           <option value="us-west-2">us-west-2</option>
-          <option value="eu-west-1">eu-west-1</option>
         </select>
       </label>
 
@@ -45,8 +57,10 @@
       <p id="status" class="status-text"></p>
     </section>
 
+    <!-- Video Section -->
     <section class="card media-card">
       <h2>Preview & Background</h2>
+
       <div class="video-row">
         <div class="video-container">
           <div id="video-preview" class="video-tile"></div>
@@ -59,17 +73,21 @@
       </div>
 
       <div class="controls-row">
+
+        <!-- Device selection -->
         <div class="control-group">
           <label>
             Camera
             <select id="cameraSelect"></select>
           </label>
+
           <label>
             Microphone
             <select id="micSelect"></select>
           </label>
         </div>
 
+        <!-- Background controls -->
         <div class="control-group">
           <label>
             Background Mode
@@ -79,23 +97,27 @@
               <option value="image">Image</option>
             </select>
           </label>
+
           <label class="file-label">
             Background Image
             <input id="bgImage" type="file" accept="image/*" />
           </label>
         </div>
 
+        <!-- Buttons -->
         <div class="buttons-group">
-          <button id="toggleVideo" class="btn">Toggle Video</button>
-          <button id="toggleAudio" class="btn">Toggle Audio</button>
+          <button id="toggleVideo" class="btn">Start Video</button>
+          <button id="toggleAudio" class="btn">Mute</button>
           <button id="leaveButton" class="btn danger">Leave</button>
         </div>
+
       </div>
     </section>
+
   </main>
 
   <footer class="app-footer">
-    <span>Built for custom Amazon Chime meetings with virtual backgrounds.</span>
+    <span>Built with Amazon Chime SDK v3 + Background Filters</span>
   </footer>
 
   <script src="app.js"></script>
