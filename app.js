@@ -1,5 +1,4 @@
 // Use ChimeSDK from window (loaded via CDN in index.html)
-const ChimeSDK = window.ChimeSDK;
 
 /**
  * AWS Chime Client – FIXED VERSION
@@ -9,6 +8,7 @@ const ChimeSDK = window.ChimeSDK;
  * - Stable background blur + replacement
  * - Stable roster + video tiles
  */
+import * as ChimeSDK from "https://esm.sh/amazon-chime-sdk-js@3.20.0";
 
 const API_URL =
   "https://ytzz5sx9r1.execute-api.ap-southeast-2.amazonaws.com/prod/join";
@@ -104,6 +104,11 @@ async function joinMeeting() {
       name,
       region
     );
+
+    if (!ChimeSDK || !ChimeSDK.ConsoleLogger) {
+      setStatus("ChimeSDK not loaded. Please check your internet connection or CDN script.");
+      return;
+    }
 
     logger = new ChimeSDK.ConsoleLogger(
       "ChimeClient",
