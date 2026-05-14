@@ -221,7 +221,6 @@ MIT License — see [`LICENSE`](LICENSE) file for details.
 
 ---
 
-## 👤 Author
-**Georges Bou Ghantous**  
-Contributions and suggestions welcome!
+<sub><i><span style="color:#B0B0B0">👤 Author: **Georges Bou Ghantous**</span></i></sub>
+
 
